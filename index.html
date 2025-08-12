@@ -1,31 +1,533 @@
-
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Barista CX Bot</title>
-  <meta name="description" content="Barista CX learning bot (LEAST + Empowerment)."/>
-  <link rel="icon" href="data:,"/>
-  <!-- Tailwind via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- React + ReactDOM via CDN (production) -->
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Third Wave Coffee • CX Coach</title>
+  <meta name="color-scheme" content="dark light" />
+  <!-- React 18 UMD (no bundler needed) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <!-- jsPDF for PDF export -->
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <style>
-    :root { color-scheme: dark; }
-    body { background: #0b0f14; }
-    .card { background: #0f1621; border: 1px solid rgba(255,255,255,0.06); }
-    .pill { background: rgba(255,255,255,0.06); }
-    .badge { background: rgba(34,197,94,0.15); color: #34d399; }
-    .btn { background: #1f2937; }
-    .btn:hover { background: #111827; }
-  </style>
 </head>
-<body class="text-slate-100 min-h-screen">
-  <div id="root" class="max-w-6xl mx-auto p-4 md:p-8"></div>
-  <script type="module" src="./app.js"></script>
+<body style="margin:0;background:#0a0c10">
+  <div id="root"></div>
+
+  <script>
+    const { useEffect, useMemo, useRef, useState } = React;
+
+    class ErrorBoundary extends React.Component {
+      constructor(p){super(p); this.state={error:null, info:null};}
+      static getDerivedStateFromError(e){ return { error:e }; }
+      componentDidCatch(error, info){ this.setState({info}); }
+      render(){
+        if (this.state.error){
+          return React.createElement('div',{style:{maxWidth:900,margin:'40px auto',padding:16,background:'#140c0c',border:'1px solid rgba(255,255,255,.2)',borderRadius:12,color:'#fee2e2'}},
+            React.createElement('div',{style:{fontWeight:700,marginBottom:8}},'App error'),
+            React.createElement('div',null,String(this.state.error)),
+            this.state.info? React.createElement('pre',{style:{whiteSpace:'pre-wrap',color:'#fecaca'}}, String(this.state.info.componentStack||'')) : null
+          );
+        }
+        return this.props.children;
+      }
+    }
+
+    function Theme() {
+      return React.createElement("style", { dangerouslySetInnerHTML: { __html: `
+        :root { --bg:#0a0c10; --surface:#0f131a; --ink:#e5e7eb; --ink-dim:#9aa3af; --accent:#7c7cff; --accent-2:#4ade80; --ring:rgba(124,124,255,0.35); --cL:#22d3ee; --cE:#f472b6; --cA:#f59e0b; --cS:#34d399; --cT:#a78bfa; --danger:#ef4444; --info:#60a5fa; }
+        *{box-sizing:border-box}
+        .app{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:var(--ink);background:
+          radial-gradient(1200px 800px at 10% -10%, rgba(124,124,255,.08), transparent),
+          radial-gradient(900px 700px at 110% 10%, rgba(74,222,128,.05), transparent),
+          #0a0c10}
+        .shell{max-width:1280px;margin:0 auto;padding:20px 14px 80px}
+        .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+        .brand{display:flex;gap:10px;align-items:center}
+        .dot{width:10px;height:10px;border-radius:999px;background:var(--accent-2);box-shadow:0 0 0 6px rgba(74,222,128,.08)}
+        .title{font-weight:600;letter-spacing:.2px}
+        .subtitle{color:var(--ink-dim);font-size:12px}
+        .wrap{display:grid;grid-template-columns:280px 1fr 320px;gap:12px}
+        .panel{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.06);border-radius:16px}
+        .panel-header{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+        .panel-body{padding:10px 12px}
+        .scenario-list{display:flex;flex-direction:column;gap:8px;padding:8px 8px 12px}
+        .scenario-item{text-align:left;cursor:pointer;border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);transition:transform .12s, box-shadow .12s}
+        .scenario-item:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(0,0,0,.25)}
+        .scenario-item.active{outline:2px solid var(--ring)}
+        .scenario-meta{display:flex;gap:8px;align-items:center;color:var(--ink-dim);font-size:11px;margin-top:4px}
+        .badge{background:rgba(124,124,255,.12);color:#c7c7ff;padding:2px 8px;border-radius:999px;font-size:10px;border:1px solid rgba(124,124,255,.24)}
+        .progress{display:flex;gap:6px}
+        .chip{height:28px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#0f131a;border:1px solid rgba(255,255,255,.06);font-size:12px;color:var(--ink-dim)}
+        .chip .dot-sm{width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,.13)}
+        .chat{height:520px;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:12px;background:#0a0f16;border-radius:14px;border:1px solid rgba(255,255,255,.06)}
+        .msg{max-width:85%;display:inline-block;padding:12px 14px;border-radius:14px;line-height:1.35;white-space:pre-wrap;word-break:break-word;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+        .guest{align-self:flex-start;background:#121826;border:1px solid rgba(124,124,255,.22)}
+        .you{align-self:flex-end;background:#121a14;border:1px solid rgba(74,222,128,.22)}
+        .sys{align-self:center;background:#0c1118;color:var(--ink-dim);border:1px dashed rgba(255,255,255,.1)}
+        .composer{display:flex;gap:8px;margin-top:10px}
+        .input{flex:1;background:#0f131a;color:var(--ink);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:14px 16px;outline:none}
+        .btn{background:linear-gradient(180deg, rgba(124,124,255,.18), rgba(124,124,255,.12));color:#eaeaff;border:1px solid rgba(124,124,255,.38);border-radius:999px;padding:12px 16px;cursor:pointer}
+        .btn.secondary{background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04)); color:#e5e7eb; border:1px solid rgba(255,255,255,.18)}
+        .btn.warn{background:linear-gradient(180deg, rgba(245,158,11,.25), rgba(245,158,11,.12));border:1px solid rgba(245,158,11,.45);color:#fff}
+        .btn:disabled{opacity:.5;cursor:not-allowed}
+        .report{margin-top:12px}
+        .meta-line{color:var(--ink-dim);font-size:12px}
+        .intro{display:grid;grid-template-columns:1fr;gap:12px}
+        .card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:16px}
+        .li{display:flex;gap:8px;align-items:flex-start}
+        .dot-mini{width:6px;height:6px;border-radius:999px;background:#c7c7ff;margin-top:8px}
+        pre.sample{white-space:pre-wrap;background:#0a0f16;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px;font-size:12px;line-height:1.45}
+        .keygrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+        .key{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;background:rgba(255,255,255,.02)}
+        .key h4{margin:0 0 8px 0;font-size:13px}
+        .key ul{margin:0;padding-left:16px}
+        .key li{margin:4px 0;font-size:12px}
+        .coach-pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:8px 12px;font-size:12px}
+        .tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 8px;font-size:11px;border:1px solid rgba(255,255,255,.12)}
+        .mobile-only{display:none}
+        .desktop-only{display:block}
+        .collapser{border:1px solid rgba(255,255,255,.12); border-radius:12px; overflow:hidden;}
+        .collapser summary{list-style:none; cursor:pointer; padding:10px 12px; background:rgba(255,255,255,.03); border-bottom:1px solid rgba(255,255,255,.06); display:flex; align-items:center; justify-content:space-between}
+        .collapser[open] summary{background:rgba(124,124,255,.08)}
+        .collapser .content{padding:10px}
+        @media (max-width: 720px){
+          .wrap{grid-template-columns:1fr}
+          .desktop-only{display:none}
+          .mobile-only{display:block}
+          .shell{padding:12px 10px 60px}
+          .chat{height:60vh}
+          .chip{height:26px}
+          .keygrid{grid-template-columns:repeat(2,1fr)}
+          .msg{max-width:100%}
+        }
+      ` }});
+    }
+
+    var DATA = {
+      meta: { version: "2.8.0", brand: "Third Wave Coffee", audience: "barista" },
+      scenarios: [
+        { id: "delay_dinein_01", title: "Order delayed (dine-in)", level: 1, trigger: "Hi—table 12. We ordered a cappuccino and chicken sandwich ~15 minutes ago. Still waiting.", tags:["dinein","ops"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
+        { id: "wrong_order_01", title: "Wrong order served", level: 1, trigger: "I asked for a Cold Brew, you served an Iced Latte.", tags:["dinein","accuracy"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
+        { id: "missed_customization_01", title: "Customization missed", level: 1, trigger: "This flat white isn’t extra-hot like I asked.", tags:["dinein","customization"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
+        { id: "stale_or_not_hot_01", title: "Tastes stale / not hot", level: 1, trigger: "This croissant tastes stale and it’s barely warm.", tags:["dinein","quality"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
+        { id: "foreign_object_hint_01", title: "Possible foreign object", level: 2, trigger: "There’s a dark speck on the plate rim—what is that?", tags:["dinein","safety"], expected:{ least:["listen","empathize","apologize"], empowerment:"escalate_mod" } }
+      ],
+      rubric: {
+        weights: { recognition_tone:10, least:40, empowerment:20, escalation:10, script_quality:10, ops_followthrough:10 },
+        penalties: { illegal_phrase_repeat:15, refund_discount_promise:20, defensive_language:10, no_thank_close:5 },
+        pass_threshold: 70,
+        bands: { coach_me: [50,69], pass:[70,100], redo:[0,49] }
+      }
+    };
+
+    var SC_LINES = {
+      delay_dinein_01: {
+        open: function(){ return DATA.scenarios[0].trigger; },
+        nudge_listen: ["Could you check the KOT?","Can you see what's causing the delay?","Can you look that up, please?","Can you confirm the token status?"],
+        after_listen: ["Thanks. Token #1182.","Okay, it's token #1182.","Here—token #1182."],
+        nudge_empathize: ["I’ve been waiting a while.","This is taking longer than expected."],
+        after_empathize: ["Alright.","Okay."],
+        nudge_apologize: ["Is anyone acknowledging this?","Do you accept it's not ideal?"],
+        after_apologize: ["Okay. What can you do for me now?","Understood. How will you fix it?","Alright—so what's the plan?"],
+        nudge_solution: ["When will it reach my table?","What are you doing about it now?","What's the ETA?"],
+        after_solution: ["Okay. Please hurry.","Sounds good—how long?","Alright, I’ll wait."],
+        nudge_thank: ["Anything else I should know?","Okay, anything else?"],
+        close: ["Alright, thanks.","Thanks."]
+      },
+      wrong_order_01: {
+        open: function(){ return DATA.scenarios[1].trigger; },
+        nudge_listen: ["Do you want the bill or table number?","Should I share my bill number?"],
+        after_listen: ["Bill ends with 274, Table 8.","Bill 274, table 8."],
+        nudge_empathize: ["This is not what I ordered.","It’s disappointing."],
+        after_empathize: ["Okay.","Fine."],
+        nudge_apologize: ["Are you sorry about this mix-up?","Can you acknowledge the mistake?"],
+        after_apologize: ["Okay. What can you do now?","Alright—how will you correct it?"],
+        nudge_solution: ["Can you replace it fresh—no sugar?","Will you remake it?"],
+        after_solution: ["Yes, Cold Brew, no sugar.","Yes—no sugar."],
+        nudge_thank: ["Anything else?"],
+        close: ["Thanks."]
+      },
+      missed_customization_01: {
+        open: function(){ return DATA.scenarios[2].trigger; },
+        nudge_listen: ["Do you want my request again?","Should I repeat my customisation?"],
+        after_listen: ["Extra-hot, that’s all.","Just extra-hot."],
+        nudge_empathize: ["It’s not a big thing, but I asked for it.","I expected it as requested."],
+        after_empathize: ["Thanks.","Alright."],
+        nudge_apologize: ["Do you accept the miss?","Are you acknowledging it?"],
+        after_apologize: ["Okay—what can you do for me now?","So, how will you fix it?"],
+        nudge_solution: ["Can you fix it now?","Will you remake it extra-hot?"],
+        after_solution: ["Great.","Okay."],
+        nudge_thank: ["Anything else?"],
+        close: ["Thank you."]
+      },
+      stale_or_not_hot_01: {
+        open: function(){ return DATA.scenarios[3].trigger; },
+        nudge_listen: ["Can you check when it was warmed?","Could you verify when it came out?"],
+        after_listen: ["Right.","Okay."],
+        nudge_empathize: ["I expected it hot and fresh.","Not the quality I expected."],
+        after_empathize: ["Okay.","Fine."],
+        nudge_apologize: ["Do you accept it’s not ideal?","Any apology here?"],
+        after_apologize: ["Okay—what can you do for me?","So what's the fix?"],
+        nudge_solution: ["What will you do about it now?","How are you fixing this?"],
+        after_solution: ["Fine.","Okay—please hurry."],
+        nudge_thank: ["Anything else?"],
+        close: ["Okay."]
+      },
+      foreign_object_hint_01: {
+        open: function(){ return DATA.scenarios[4].trigger; },
+        nudge_listen: ["Can you take a proper look?","Please check it closely."],
+        after_listen: ["That’s what I saw.","Yes, exactly that."],
+        nudge_empathize: ["This makes me uneasy.","This is concerning."],
+        after_empathize: ["Hmm.","Alright."],
+        nudge_apologize: ["Are you acknowledging the issue?","Any apology here?"],
+        after_apologize: ["Okay—what will you do now?","So what's next?"],
+        nudge_solution: ["This seems serious—what now?","What's the process?"],
+        after_solution: ["Please get your manager now.","Can you call your manager, please?"],
+        nudge_thank: ["Anything else?"],
+        close: ["Okay, I’ll wait."]
+      }
+    };
+
+    var DIALOGUE_KEY = {
+      listen: [
+        "Give me a moment, I’ll check your KOT and confirm the token.",
+        "May I see the bill or table number to verify your order?",
+        "Let me pull up your order—could you share the token?"
+      ],
+      empathize: [
+        "I understand the wait isn’t ideal.",
+        "I get how that’s frustrating.",
+        "I hear you—this isn’t the experience we want for you."
+      ],
+      apologize: [
+        "I’m really sorry about this.",
+        "My apologies—we should have done better.",
+        "I’m sorry you had to face this."
+      ],
+      solutionize: [
+        "I’ll replace this now and bring it fresh in 3 minutes.",
+        "I’ll remake it to your request and get it out right away.",
+        "Let me shift you to a clean table while we fix this."
+      ],
+      thank: [
+        "Thank you for your patience.",
+        "Thanks for flagging this.",
+        "We appreciate your understanding."
+      ]
+    };
+
+    var KW = {
+      listen: ["could you tell me","may i know","what happened","help me understand","can you share","let me check","may i confirm","could i see your bill","can i check your kot","give me a moment","one moment","just a moment","hang on","i'll check","let me look up","let me pull up","receipt","bill number","table","token","allow me to check"],
+      empathize: ["i understand","i get it","i hear you","i see how","that wasn't ideal","not ideal","that must be frustrating","i know this is frustrating","i can imagine","you've had to wait","you have had to wait","i get how"],
+      apologize: ["i'm sorry","i am sorry","we're sorry","we are sorry","sorry","so sorry","sorry about that","really sorry","truly sorry","my apologies","apologies","my bad","apologise","apologize"],
+      solutionize: ["let me replace","i'll replace","allow me to replace","i will replace","i'll remake","let me remake","i'll get it out","i will fix it","i'll fix it now","right away","immediately","i'll bring it fresh","bring you a fresh","prepare a fresh","i'll move you","let me shift you","i'll check your kot","let me check your kot","i'll get this replaced","i'll get you another"],
+      thank: ["thank you","thanks","appreciate your patience","we appreciate","thanks for waiting","thank you for your patience","thanks for flagging","appreciate it"],
+      escalation: ["manager","mod","supervisor","manager on duty","duty manager"],
+      forbidden_refund: ["refund","discount","compensate","100% off","credit note"]
+    };
+
+    function hit(t, arr){ return arr.some(function(k){ return t.indexOf(k) > -1; }); }
+    function analyze(t){ t = (t||"").toLowerCase(); return { listen:hit(t,KW.listen), empathize:hit(t,KW.empathize), apologize:hit(t,KW.apologize), solutionize:hit(t,KW.solutionize), thank:hit(t,KW.thank), escalation:hit(t,KW.escalation), forbidden_refund:hit(t,KW.forbidden_refund) }; }
+    function hasTag(s, tag){ return s.tags && s.tags.indexOf(tag) > -1; }
+    function getLeast(s){ return (s.expected && s.expected.least) ? s.expected.least : ["listen","empathize","apologize","solutionize","thank"]; }
+    function needsEscalation(s){ return (s.expected && s.expected.empowerment === "escalate_mod") || (s.tags && s.tags.indexOf("safety")>-1); }
+
+    function CoachPanel(props){
+      var map = {listen:{c:'var(--cL)'}, empathize:{c:'var(--cE)'}, apologize:{c:'var(--cA)'}, solutionize:{c:'var(--cS)'}, thank:{c:'var(--cT)'}};
+      var need = getLeast(props.scenario);
+      var next = need.find(function(k){ return !props.stats[k]; }) || (needsEscalation(props.scenario) && !props.stats.escalation ? 'escalation' : 'thank');
+      var hint = (DIALOGUE_KEY[next] && DIALOGUE_KEY[next][0]) || (next==='escalation'?'Please allow me to call my manager on duty.': 'Close with a brief thank-you.');
+      return React.createElement("div", { className:"panel" },
+        React.createElement("div", { className:"panel-header" },
+          React.createElement("div", null, "Coach"),
+          React.createElement("div", { className:"tag", style:{borderColor:'rgba(255,255,255,.2)'} }, "Always on guide")
+        ),
+        React.createElement("div", { className:"panel-body", style:{display:'grid', gap:10} },
+          React.createElement("div", { className:"card" },
+            React.createElement("div", { className:"coach-pill", style:{background:'rgba(255,255,255,.03)', border:'1px solid rgba(255,255,255,.12)', color:'#fff'} },
+              React.createElement("span", { style:{width:8,height:8,borderRadius:999,background: map[next] ? map[next].c : 'var(--info)'} }),
+              React.createElement("b", null, "Next action:"),
+              React.createElement("span", null, next.toUpperCase())
+            ),
+            React.createElement("div", { style:{marginTop:8, color:'#cbd5e1', fontSize:12} }, "Try:"),
+            React.createElement("div", { style:{marginTop:4, fontSize:12, color:'#e5e7eb'} }, hint)
+          ),
+          React.createElement("div", { className:"card" },
+            React.createElement("div", { style:{fontWeight:600, marginBottom:8} }, "Dialogue key"),
+            React.createElement("div", { className:"keygrid" },
+              Object.keys(DIALOGUE_KEY).map(function(step){ return React.createElement("div", { key:step, className:"key", style:{borderColor: step==='listen'?'rgba(34,211,238,.3)': step==='empathize'?'rgba(244,114,182,.3)': step==='apologize'?'rgba(245,158,11,.35)': step==='solutionize'?'rgba(52,211,153,.35)':'rgba(167,139,250,.35)'} },
+                React.createElement("h4", { style:{color: step==='listen'?'var(--cL)': step==='empathize'?'var(--cE)': step==='apologize'?'var(--cA)': step==='solutionize'?'var(--cS)':'var(--cT)'} }, step.toUpperCase()),
+                React.createElement("ul", null, DIALOGUE_KEY[step].map(function(line,i){ return React.createElement("li", { key:i }, line); }))
+              ); })
+            )
+          ),
+          needsEscalation(props.scenario) ? React.createElement("div", { className:"card" },
+            React.createElement("div", { style:{fontWeight:600, marginBottom:8, color:'var(--danger)'} }, "Safety/Escalation"),
+            React.createElement("div", { style:{fontSize:12, color:'#e5e7eb'} }, "If the issue hints at safety, say: 'I’m really sorry—allow me to call my manager on duty right away.'")
+          ) : null
+        )
+      );
+    }
+
+    function IntroSamples(){
+      var block = `
+Scenario 1 — Order delayed (dine-in)
+Guest: Hi—table 12. We ordered a cappuccino and chicken sandwich ~15 minutes ago. Still waiting.
+You: Give me a moment, I’ll check your KOT and confirm the token. Could I see your bill?
+Guest: Thanks. Token #1182.
+You: I understand the wait isn’t ideal. I’m really sorry about this.
+You: I’ll get the cappuccino and sandwich out right away and bring them fresh to your table in 3 minutes.
+You: Thank you for your patience.
+
+Scenario 2 — Wrong order served
+Guest: I asked for a Cold Brew, you served an Iced Latte.
+You: May I confirm the bill number or table? I’ll check this now.
+Guest: Bill ends with 274, Table 8.
+You: I get how that’s frustrating. I’m sorry about the mix-up.
+You: I’ll replace it with a fresh Cold Brew, no sugar, and bring it out immediately.
+You: Thanks for flagging this.
+`;
+      return React.createElement("pre", { className:"sample" }, block);
+    }
+
+    function useAssessment(scenario, rubric, restartTick){
+      const [stats, setStats] = useState({listen:false, empathize:false, apologize:false, solutionize:false, thank:false, escalation:false, forbidden_refund:false});
+      const [messages, setMessages] = useState([{ role:"guest", text: (SC_LINES[scenario.id] && SC_LINES[scenario.id].open()) || scenario.trigger }]);
+      const startTime = useRef(Date.now());
+      const idxRef = useRef({});
+
+      useEffect(function(){ setStats({listen:false, empathize:false, apologize:false, solutionize:false, thank:false, escalation:false, forbidden_refund:false}); setMessages([{ role:"guest", text: (SC_LINES[scenario.id] && SC_LINES[scenario.id].open()) || scenario.trigger }]); idxRef.current={}; }, [scenario.id, restartTick]);
+
+      function choose(key, arr, fallback){ var a = (arr && arr.length? arr : (fallback||[])); if (!a.length) return null; var k = scenario.id+"::"+key; var i = (idxRef.current[k]||0)%a.length; idxRef.current[k]=i+1; return a[i]; }
+
+      function userSend(text){
+        const a = analyze(text);
+        const prev = Object.assign({}, stats);
+        const next = Object.assign({}, stats);
+        for (var k in a) { if (a.hasOwnProperty(k)) next[k] = next[k] || a[k]; }
+        setStats(next);
+        setMessages(function(m){ return m.concat([{ role:"you", text: text }]); });
+        var reply = decideGuestReply(scenario, prev, next);
+        if (reply) setMessages(function(m){ return m.concat([{ role:"guest", text: reply }]); });
+      }
+
+      function decideGuestReply(s, prev, st){
+        var sc = SC_LINES[s.id] || {};
+        var need = getLeast(s);
+        if (!prev.listen && st.listen) return choose('after_listen', sc.after_listen, ["Okay, got it."]);
+        if (!prev.empathize && st.empathize) return choose('after_empathize', sc.after_empathize, ["Alright."]);
+        if (!prev.apologize && st.apologize) return choose('after_apologize', sc.after_apologize, ["Okay. What can you do for me now?"]);
+        if (!prev.solutionize && st.solutionize) return choose('after_solution', sc.after_solution, ["Okay, please hurry."]);
+        if (!prev.thank && st.thank) return choose('close', sc.close, ["Thanks."]);
+        if (needsEscalation(s) && !st.escalation) return "Can you call your manager, please?";
+        if (!st.listen && need.indexOf("listen")>-1) return choose('nudge_listen', sc.nudge_listen, ["Can you check on it, please?"]);
+        if (!st.empathize && need.indexOf("empathize")>-1) return choose('nudge_empathize', sc.nudge_empathize, ["It feels like no one understands the issue."]);
+        if (!st.apologize && need.indexOf("apologize")>-1) return choose('nudge_apologize', sc.nudge_apologize, ["Are you sorry about this?"]);
+        if (!st.solutionize && need.indexOf("solutionize")>-1) return choose('nudge_solution', sc.nudge_solution, ["What will you do right now?"]);
+        if (!st.thank && need.indexOf("thank")>-1) return choose('nudge_thank', sc.nudge_thank, ["Anything else?"]);
+        return choose('close', sc.close, ["Thanks."]);
+      }
+
+      function isResolved(s, st){
+        var need = getLeast(s);
+        var leastOk = need.every(function(k){ return st[k]; });
+        var escOk = (!needsEscalation(s)) || st.escalation;
+        var empowerOk = !st.forbidden_refund;
+        return leastOk && escOk && empowerOk;
+      }
+
+      function score(){
+        const w = rubric.weights, p = rubric.penalties;
+        var score = 0;
+        if (stats.listen || stats.empathize || stats.apologize) score += w.recognition_tone;
+        var need = getLeast(scenario);
+        var haveCount = need.filter(function(k){ return stats[k]; }).length;
+        score += (haveCount / (need.length||5)) * w.least;
+        if (!stats.forbidden_refund) score += w.empowerment;
+        score += (needsEscalation(scenario) ? (stats.escalation? w.escalation:0) : w.escalation);
+        if (stats.empathize && stats.apologize) score += w.script_quality;
+        if (stats.solutionize) score += w.ops_followthrough;
+        var penalties = 0;
+        if (stats.forbidden_refund) penalties += p.refund_discount_promise;
+        score = Math.max(0, Math.min(100, Math.round(score - penalties)));
+        var band = score >= rubric.pass_threshold ? "PASS" : (score >= rubric.bands.coach_me[0] ? "COACH-ME" : "REDO");
+        return { score: score, band: band, durationSec: Math.round((Date.now()-startTime.current)/1000) };
+      }
+
+      return { messages:messages, stats:stats, userSend:userSend, isResolved:function(){ return isResolved(scenario, stats); }, score:score };
+    }
+
+    function ScenarioList(props){
+      return React.createElement("div", { className:"scenario-list" },
+        DATA.scenarios.map(function(s){ return React.createElement("div", { key:s.id, className:"scenario-item" + (props.scenarioId===s.id?" active":""), onClick:function(){ props.onSelect(s.id); } },
+          React.createElement("div", { style:{fontWeight:600} }, s.title),
+          React.createElement("div", { className:"scenario-meta" }, React.createElement("span", { className:"badge" }, "L"+String(s.level)), React.createElement("span", null, s.tags.join(" • ")))
+        ); })
+      );
+    }
+
+    function DialogueKey(){
+      return React.createElement("div", { className:"card" },
+        React.createElement("div", { style:{fontWeight:600, marginBottom:8} }, "Dialogue key (use these live)"),
+        React.createElement("div", { className:"keygrid" },
+          Object.keys(DIALOGUE_KEY).map(function(step){ return React.createElement("div", { key:step, className:"key", style:{borderColor: step==='listen'?'rgba(34,211,238,.3)': step==='empathize'?'rgba(244,114,182,.3)': step==='apologize'?'rgba(245,158,11,.35)': step==='solutionize'?'rgba(52,211,153,.35)':'rgba(167,139,250,.35)'} },
+            React.createElement("h4", { style:{color: step==='listen'?'var(--cL)': step==='empathize'?'var(--cE)': step==='apologize'?'var(--cA)': step==='solutionize'?'var(--cS)':'var(--cT)'} }, step.toUpperCase()),
+            React.createElement("ul", null, DIALOGUE_KEY[step].map(function(line,i){ return React.createElement("li", { key:i }, line); }))
+          ); })
+        )
+      );
+    }
+
+    function Composer(props){
+      const [v,setV] = useState("");
+      function send(){ if(!v.trim()) return; props.onSend(v.trim()); setV(""); }
+      return React.createElement("div", { className:"composer" },
+        React.createElement("input", { className:"input", placeholder:"Type your response… (guide in Coach)", value:v, onChange:function(e){setV(e.target.value);}, onKeyDown:function(e){ if(e.key==='Enter') send(); }, disabled:!!props.disabled }),
+        React.createElement("button", { className:"btn", onClick:send, disabled:!!props.disabled }, "Send")
+      );
+    }
+
+    function ReportCard(props){
+      function downloadJSON(){
+        var blob = new Blob([JSON.stringify(props.report,null,2)], {type:'application/json'});
+        var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        var ts = new Date().toISOString().split(':').join('-');
+        a.download = 'cx_session_'+props.report.scenarioId+'_'+ts+'.json'; a.click(); URL.revokeObjectURL(a.href);
+      }
+      return React.createElement("div", { className:"panel report" },
+        React.createElement("div", { className:"panel-header" },
+          React.createElement("div", null, "Session Report"),
+          React.createElement("button", { className:"btn", onClick:downloadJSON }, "Download JSON")
+        ),
+        React.createElement("div", { className:"panel-body", style:{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12} },
+          React.createElement("div", null,
+            React.createElement("div", { className:"meta-line" }, React.createElement("b", null, "Scenario"), ": ", props.report.scenarioTitle),
+            React.createElement("div", { className:"meta-line" }, React.createElement("b", null, "Score"), ": ", props.report.score, " • ", React.createElement("b", null, "Band"), ": ", props.report.band),
+            React.createElement("div", { className:"meta-line" }, React.createElement("b", null, "Duration"), ": ", props.report.durationSec, "s"),
+            React.createElement("div", { className:"meta-line" }, React.createElement("b", null, "Timestamp"), ": ", props.report.timestamp),
+            React.createElement("div", { style:{marginTop:8} },
+              React.createElement("div", { style:{opacity:.8, fontWeight:600, marginBottom:6} }, "Breakdown"),
+              React.createElement("pre", { style:{background:'#0a0f16', border:'1px solid rgba(255,255,255,0.06)', borderRadius:10, padding:10, fontSize:12} }, JSON.stringify(props.report.breakdown,null,2))
+            )
+          ),
+          React.createElement("div", null,
+            React.createElement("div", { style:{opacity:.8, fontWeight:600, marginBottom:6} }, "Transcript (last 6)"),
+            React.createElement("div", { className:"chat", style:{height:220} },
+              props.report.messages.slice(-6).map(function(m,i){ return React.createElement("div", { key:i, className:'msg '+(m.role==='you'?'you':'guest') }, m.text); })
+            )
+          )
+        )
+      );
+    }
+
+    function Intro(props){
+      return React.createElement("div", { className:"panel" },
+        React.createElement("div", { className:"panel-header" },
+          React.createElement("div", null, "How this works"),
+          React.createElement("div", { style:{display:'flex',gap:8} },
+            React.createElement("button", { className:"btn", onClick: props.onStart }, "Start training")
+          )
+        ),
+        React.createElement("div", { className:"panel-body" },
+          React.createElement("div", { className:"intro" },
+            React.createElement("div", { className:"card" },
+              React.createElement("div", { style:{fontWeight:600, marginBottom:8} }, "Your goal"),
+              React.createElement("div", { className:"subtitle", style:{marginBottom:10} }, "Resolve the guest's issue in chat using LEAST and barista empowerment rules."),
+              React.createElement("div", { className:"li" }, React.createElement("div", { className:"dot-mini" }), React.createElement("div", null, React.createElement("b", null, "LEAST"), ": Listen · Empathize · Apologize · Solution · Thank.")),
+              React.createElement("div", { className:"li" }, React.createElement("div", { className:"dot-mini" }), React.createElement("div", null, React.createElement("b", null, "Empowerment"), ": Replace live orders. No refunds/discounts. Escalate safety.")),
+              React.createElement("div", { className:"li" }, React.createElement("div", { className:"dot-mini" }), React.createElement("div", null, React.createElement("b", null, "Success"), ": Auto-ends when you complete LEAST + the correct action without over-promising."))
+            ),
+            React.createElement(DialogueKey, null),
+            React.createElement("div", { className:"card" },
+              React.createElement("div", { style:{fontWeight:600, marginBottom:8} }, "Sample dialogues"),
+              React.createElement(IntroSamples, null)
+            )
+          )
+        )
+      );
+    }
+
+    function MobileDropdowns(props){
+      return React.createElement("div", { className:"mobile-only", style:{display:'grid', gap:10} },
+        React.createElement("details", { className:"collapser" },
+          React.createElement("summary", null, "Scenario", React.createElement("span", { className:"badge", style:{marginLeft:8} }, "v"+DATA.meta.version)),
+          React.createElement("div", { className:"content" }, React.createElement(ScenarioList, { scenarioId:props.scenarioId, onSelect:props.onSelect }))
+        ),
+        React.createElement("details", { className:"collapser" },
+          React.createElement("summary", null, "Coach"),
+          React.createElement("div", { className:"content" }, React.createElement(CoachPanel, { scenario:props.scenario, stats:props.stats }))
+        )
+      );
+    }
+
+    function MainApp(){
+      const [started, setStarted] = useState(false);
+      const [scenarioId, setScenarioId] = useState(DATA.scenarios[0] ? DATA.scenarios[0].id : null);
+      const scenario = useMemo(function(){ return DATA.scenarios.filter(function(s){ return s.id===scenarioId; })[0]; }, [scenarioId]);
+      const [restartTick, setRestartTick] = useState(0);
+      const assess = useAssessment(scenario, DATA.rubric, restartTick);
+      const [report, setReport] = useState(null);
+
+      function finish(){
+        var r0 = assess.score();
+        var rpt = { scenarioId: scenario.id, scenarioTitle: scenario.title, timestamp: new Date().toISOString(), score:r0.score, band:r0.band, durationSec:r0.durationSec, breakdown: assess.stats, messages: assess.messages };
+        setReport(rpt);
+      }
+      function restart(){ setReport(null); setRestartTick(function(x){ return x+1; }); }
+
+      useEffect(function(){ if (started && assess.isResolved() && !report) { var t = setTimeout(function(){ finish(); }, 250); return function(){ clearTimeout(t); }; } }, [assess.messages, report, started]);
+
+      var chipStyle = function(k,on){ var c = k==='L'?'var(--cL)':k==='E'?'var(--cE)':k==='A'?'var(--cA)':k==='S'?'var(--cS)':'var(--cT)'; return { borderColor:on?c:'rgba(255,255,255,.06)', color:on?'#0a0c10':'var(--ink-dim)', background:on?c:'rgba(255,255,255,.02)' }; };
+
+      return React.createElement("div", { className:"app" },
+        React.createElement(Theme, null),
+        React.createElement("div", { className:"shell" },
+          React.createElement("div", { className:"topbar" },
+            React.createElement("div", { className:"brand" }, React.createElement("div", { className:"dot" }), React.createElement("div", null,
+              React.createElement("div", { className:"title" }, "Third Wave Coffee • CX Coach"),
+              React.createElement("div", { className:"subtitle" }, started ? "Minimal. Precise. Floor-ready." : "Read the brief, skim samples, then start.")
+            )),
+            started ? React.createElement("div", { className:"progress" }, ["L","E","A","S","T"].map(function(k){
+              var map = {L:"listen",E:"empathize",A:"apologize",S:"solutionize",T:"thank"};
+              var on = assess.stats[map[k]];
+              return React.createElement("div", { key:k, className:"chip", style: chipStyle(k,on) }, React.createElement("span", { className:"dot-sm" }), k);
+            })) : null
+          ),
+
+          !started ? React.createElement(Intro, { onStart:function(){ setReport(null); setStarted(true); } }) : (
+            React.createElement("div", { className:"wrap" },
+              React.createElement("aside", { className:"panel desktop-only" },
+                React.createElement("div", { className:"panel-header" }, React.createElement("div", null, "Scenarios"), React.createElement("div", { className:"subtitle" }, "v"+DATA.meta.version)),
+                React.createElement("div", { className:"panel-body", style:{paddingTop:6} },
+                  React.createElement(ScenarioList, { scenarioId:scenarioId, onSelect:function(id){ setReport(null); setScenarioId(id); } })
+                )
+              ),
+              React.createElement("section", { className:"panel", style:{display:"flex", flexDirection:"column"} },
+                React.createElement("div", { className:"panel-header", style:{gap:10} },
+                  React.createElement("div", null, React.createElement("div", { style:{fontWeight:600} }, scenario.title), React.createElement("div", { className:"subtitle" }, "Chat until it’s actually resolved.")),
+                  React.createElement("div", { style:{display:'flex', gap:8} },
+                    React.createElement("button", { className:"btn secondary", onClick: function(){ setReport(null); setRestartTick(function(x){ return x+1; }); } }, "Start again")
+                  )
+                ),
+                React.createElement("div", { className:"panel-body", style:{display:"flex", flexDirection:"column", gap:10} },
+                  React.createElement(MobileDropdowns, { scenarioId:scenarioId, onSelect:function(id){ setReport(null); setScenarioId(id); }, scenario:scenario, stats:assess.stats }),
+                  React.createElement("div", { className:"chat" }, assess.messages.map(function(m,i){ return React.createElement("div", { key:i, className:'msg '+(m.role==='you'?'you':m.role==='guest'?'guest':'sys') }, m.text); })),
+                  React.createElement(Composer, { onSend:function(t){ assess.userSend(t); }, disabled:!!report }),
+                  React.createElement("div", { style:{display:"flex", gap:8, justifyContent:"flex-end"} }, React.createElement("button", { className:"btn warn", onClick: function(){ if(!report) finish(); } }, "End & Score")),
+                  report ? React.createElement(ReportCard, { report:report }) : null
+                )
+              ),
+              React.createElement("div", { className:"desktop-only" }, React.createElement(CoachPanel, { scenario:scenario, stats:assess.stats }))
+            )
+          )
+        )
+      );
+    }
+
+    function App(){
+      return React.createElement(ErrorBoundary, null, React.createElement(MainApp, null));
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+  </script>
 </body>
 </html>
