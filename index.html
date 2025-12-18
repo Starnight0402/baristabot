@@ -1,803 +1,1070 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark" />
-  <title>Third Wave Coffee • CX Coach</title>
-  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Cafe Way - Service Training</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    .gradient-purple {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(40px) saturate(180%);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+    
+    .progress-shine {
+      background: linear-gradient(90deg, 
+        #4f46e5 0%, 
+        #6366f1 50%, 
+        #4f46e5 100%);
+      background-size: 200% 100%;
+      animation: shine 4s ease-in-out infinite;
+    }
+    
+    @keyframes shine {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    .slide-up {
+      animation: slideUp 0.5s ease-out;
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .bounce-in {
+      animation: bounceIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .float {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    @keyframes floatParticle {
+      0% {
+        transform: translateY(100vh) scale(0);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-100px) scale(1);
+        opacity: 0;
+      }
+    }
+
+    .pulse-slow {
+      animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    
+    @keyframes bounceIn {
+      0% {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .pulse-glow {
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulseGlow {
+      0%, 100% {
+        box-shadow: 0 0 20px rgba(139, 127, 217, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 40px rgba(139, 127, 217, 0.8);
+      }
+    }
+  </style>
 </head>
 <body>
   <div id="root"></div>
 
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script type="text/babel" data-type="module">
+    const { useState, useEffect } = React;
 
-  <script>
-  const { useEffect, useMemo, useRef, useState } = React;
-
-  class ErrorBoundary extends React.Component {
-    constructor(p){ super(p); this.state = { error:null, info:null }; }
-    static getDerivedStateFromError(e){ return { error:e }; }
-    componentDidCatch(error, info){ this.setState({ info }); }
-    render(){
-      if (this.state.error){
-        return React.createElement(
-          'div',
-          { style:{maxWidth:900,margin:'40px auto',padding:16,background:'#140c0c',border:'1px solid rgba(255,255,255,.2)',borderRadius:12,color:'#fee2e2'} },
-          React.createElement('div',{style:{fontWeight:700,marginBottom:8}},'App error'),
-          React.createElement('div',null,String(this.state.error)),
-          this.state.info ? React.createElement('pre',{style:{whiteSpace:'pre-wrap',color:'#fecaca'}}, String(this.state.info.componentStack||'')) : null
-        );
+    const SCENARIOS = [
+      {
+        id: "delay_dinein_01",
+        title: "Order delayed (dine-in)",
+        description: "Customer waiting for 15+ minutes",
+        difficulty: "Level 1",
+        xp: 100,
+        customerMessage: "Hi. We ordered a cappuccino and chicken sandwich ~15 minutes ago. Still waiting.",
+        emoji: "⏰"
+      },
+      {
+        id: "coffee_cold_01",
+        title: "Coffee too cold",
+        description: "Temperature issue with beverage",
+        difficulty: "Level 1",
+        xp: 100,
+        customerMessage: "This coffee is cold.",
+        emoji: "☕"
+      },
+      {
+        id: "wrong_drink_01",
+        title: "Wrong drink served",
+        description: "Order accuracy issue",
+        difficulty: "Level 1",
+        xp: 100,
+        customerMessage: "I asked for a Cold Brew, you served an Iced Latte.",
+        emoji: "🥤"
+      },
+      {
+        id: "drink_bitter_01",
+        title: "Drink tastes too bitter",
+        description: "Taste/quality complaint",
+        difficulty: "Level 1",
+        xp: 100,
+        customerMessage: "This drink is way too bitter.",
+        emoji: "😖"
+      },
+      {
+        id: "milk_temp_wrong_01",
+        title: "Milk temperature wrong",
+        description: "Customization not followed",
+        difficulty: "Level 1",
+        xp: 100,
+        customerMessage: "The milk temperature is off.",
+        emoji: "🌡️"
+      },
+      {
+        id: "seating_dirty_01",
+        title: "Seating not clean",
+        description: "Cleanliness issue",
+        difficulty: "Level 1",
+        xp: 100,
+        customerMessage: "This table isn't clean.",
+        emoji: "🧹"
+      },
+      {
+        id: "pastry_stale_01",
+        title: "Pastry tastes stale",
+        description: "Food quality issue",
+        difficulty: "Level 1",
+        xp: 100,
+        customerMessage: "This pastry tastes stale.",
+        emoji: "🥐"
+      },
+      {
+        id: "noise_loud_01",
+        title: "Music/noise too loud",
+        description: "Ambience complaint",
+        difficulty: "Level 1",
+        xp: 100,
+        customerMessage: "It's too loud in here.",
+        emoji: "🔊"
+      },
+      {
+        id: "cup_chipped_01",
+        title: "Cup/mug chipped",
+        description: "Safety concern",
+        difficulty: "Level 1",
+        xp: 100,
+        customerMessage: "This cup is chipped.",
+        emoji: "☕"
+      },
+      {
+        id: "coffee_strong_01",
+        title: "Coffee too strong",
+        description: "Strength preference",
+        difficulty: "Level 1",
+        xp: 100,
+        customerMessage: "The coffee is too strong for me.",
+        emoji: "💪"
+      },
+      {
+        id: "coffee_weak_01",
+        title: "Coffee too weak",
+        description: "Strength preference",
+        difficulty: "Level 1",
+        xp: 100,
+        customerMessage: "This coffee tastes weak.",
+        emoji: "💧"
+      },
+      {
+        id: "hair_in_drink_01",
+        title: "Hair in drink (safety)",
+        description: "Serious safety issue - escalate",
+        difficulty: "Level 2",
+        xp: 150,
+        customerMessage: "There's a hair in my drink.",
+        emoji: "⚠️"
       }
-      return this.props.children;
-    }
-  }
-
-  function Theme(){
-    return React.createElement("style", { dangerouslySetInnerHTML: { __html: `
-      :root { --bg:#0a0c10; --surface:#0f131a; --ink:#e5e7eb; --ink-dim:#9aa3af; --accent:#7c7cff; --accent-2:#4ade80; --ring:rgba(124,124,255,0.35); --cL:#22d3ee; --cE:#f472b6; --cA:#f59e0b; --cS:#34d399; --cT:#a78bfa; --danger:#ef4444; --info:#60a5fa; }
-      *{box-sizing:border-box}
-      .app{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:var(--ink);background:
-        radial-gradient(1200px 800px at 10% -10%, rgba(124,124,255,.08), transparent),
-        radial-gradient(900px 700px at 110% 10%, rgba(74,222,128,.05), transparent),
-        #0a0c10}
-      .shell{max-width:1280px;margin:0 auto;padding:20px 14px 80px}
-      .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-      .brand{display:flex;gap:10px;align-items:center}
-      .dot{width:10px;height:10px;border-radius:999px;background:var(--accent-2);box-shadow:0 0 0 6px rgba(74,222,128,.08)}
-      .title{font-weight:600;letter-spacing:.2px}
-      .subtitle{color:var(--ink-dim);font-size:12px}
-      .wrap{display:grid;grid-template-columns:280px 1fr 320px;gap:12px}
-      .panel{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.06);border-radius:16px}
-      .panel-header{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
-      .panel-body{padding:10px 12px}
-      .scenario-list{display:flex;flex-direction:column;gap:8px;padding:8px 8px 12px}
-      .scenario-item{text-align:left;cursor:pointer;border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);transition:transform .12s, box-shadow .12s}
-      .scenario-item:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(0,0,0,.25)}
-      .scenario-item.active{outline:2px solid var(--ring)}
-      .scenario-meta{display:flex;gap:8px;align-items:center;color:var(--ink-dim);font-size:11px;margin-top:4px}
-      .badge{background:rgba(124,124,255,.12);color:#c7c7ff;padding:2px 8px;border-radius:999px;font-size:10px;border:1px solid rgba(124,124,255,.24)}
-      .progress{display:flex;gap:6px}
-      .chip{height:28px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#0f131a;border:1px solid rgba(255,255,255,.06);font-size:12px;color:var(--ink-dim)}
-      .chip .dot-sm{width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,.13)}
-      .chat{height:520px;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:12px;background:#0a0f16;border-radius:14px;border:1px solid rgba(255,255,255,.06)}
-      .msg{max-width:85%;display:inline-block;padding:12px 14px;border-radius:14px;line-height:1.35;white-space:pre-wrap;word-break:break-word;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-      .guest{align-self:flex-start;background:#121826;border:1px solid rgba(124,124,255,.22)}
-      .you{align-self:flex-end;background:#121a14;border:1px solid rgba(74,222,128,.22)}
-      .sys{align-self:center;background:#0c1118;color:var(--ink-dim);border:1px dashed rgba(255,255,255,.1)}
-      .composer{display:flex;gap:8px;margin-top:10px}
-      .input{flex:1;background:#0f131a;color:var(--ink);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:14px 16px;outline:none}
-      .btn{background:linear-gradient(180deg, rgba(124,124,255,.18), rgba(124,124,255,.12));color:#eaeaff;border:1px solid rgba(124,124,255,.38);border-radius:999px;padding:12px 16px;cursor:pointer}
-      .btn.secondary{background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04)); color:#e5e7eb; border:1px solid rgba(255,255,255,.18)}
-      .btn.warn{background:linear-gradient(180deg, rgba(245,158,11,.25), rgba(245,158,11,.12));border:1px solid rgba(245,158,11,.45);color:#fff}
-      .btn:disabled{opacity:.5;cursor:not-allowed}
-      .report{margin-top:12px}
-      .meta-line{color:var(--ink-dim);font-size:12px}
-      .intro{display:grid;grid-template-columns:1fr;gap:12px}
-      .card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:16px}
-      .li{display:flex;gap:8px;align-items:flex-start}
-      .dot-mini{width:6px;height:6px;border-radius:999px;background:#c7c7ff;margin-top:8px}
-      pre.sample{white-space:pre-wrap;background:#0a0f16;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px;font-size:12px;line-height:1.45}
-      .keygrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-      .key{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;background:rgba(255,255,255,.02)}
-      .key h4{margin:0 0 8px 0;font-size:13px}
-      .key ul{margin:0;padding-left:16px}
-      .key li{margin:4px 0;font-size:12px}
-      .coach-pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:8px 12px;font-size:12px}
-      .tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 8px;font-size:11px;border:1px solid rgba(255,255,255,.12)}
-
-      .mobile-only{display:none}
-      .desktop-only{display:block}
-      .collapser{border:1px solid rgba(255,255,255,.12); border-radius:12px; overflow:hidden;}
-      .collapser summary{list-style:none; cursor:pointer; padding:10px 12px; background:rgba(255,255,255,.03); border-bottom:1px solid rgba(255,255,255,.06); display:flex; align-items:center; justify-content:space-between}
-      .collapser[open] summary{background:rgba(124,124,255,.08)}
-      .collapser .content{padding:10px}
-
-      @media (max-width: 720px){
-        .wrap{grid-template-columns:1fr}
-        .desktop-only{display:none}
-        .mobile-only{display:block}
-        .shell{padding:12px 10px 60px}
-        .chat{height:60vh}
-        .chip{height:26px}
-        .keygrid{grid-template-columns:repeat(2,1fr)}
-        .msg{max-width:100%}
-      }
-    ` } });
-  }
-
-  var DATA = {
-    meta: { version: "3.1.0", brand: "Third Wave Coffee", audience: "barista" },
-    scenarios: [
-      { id: "delay_dinein_01", title: "Order delayed (dine-in)", level: 1, trigger: "Hi. We ordered a cappuccino and chicken sandwich ~15 minutes ago. Still waiting.", tags:["dinein","ops"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
-      { id: "coffee_cold_01", title: "Coffee too cold", level: 1, trigger: "This coffee is cold.", tags:["dinein","quality"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
-      { id: "wrong_drink_01", title: "Wrong drink served", level: 1, trigger: "I asked for a Cold Brew, you served an Iced Latte.", tags:["dinein","accuracy"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
-      { id: "drink_bitter_01", title: "Drink tastes too bitter", level: 1, trigger: "This drink is way too bitter.", tags:["dinein","taste"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
-      { id: "milk_temp_wrong_01", title: "Milk temperature wrong", level: 1, trigger: "The milk temperature is off.", tags:["dinein","customization"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
-      { id: "seating_dirty_01", title: "Seating not clean", level: 1, trigger: "This table isn’t clean.", tags:["dinein","ops"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
-      { id: "pastry_stale_01", title: "Pastry tastes stale", level: 1, trigger: "This pastry tastes stale.", tags:["dinein","quality"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
-      { id: "noise_loud_01", title: "Music/noise too loud", level: 1, trigger: "It’s too loud in here.", tags:["dinein","ambience"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
-      { id: "cup_chipped_01", title: "Cup/mug chipped", level: 1, trigger: "This cup is chipped.", tags:["dinein","safety"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
-      { id: "coffee_strong_01", title: "Coffee too strong", level: 1, trigger: "The coffee is too strong for me.", tags:["dinein","taste"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
-      { id: "coffee_weak_01", title: "Coffee too weak", level: 1, trigger: "This coffee tastes weak.", tags:["dinein","taste"], expected:{ least:["listen","empathize","apologize","solutionize","thank"], empowerment:"replace_only" } },
-      { id: "hair_in_drink_01", title: "Hair in drink (safety)", level: 2, trigger: "There’s a hair in my drink.", tags:["dinein","safety"], expected:{ least:["listen","empathize","apologize"], empowerment:"escalate_mod" } }
-    ],
-    rubric: {
-      weights: { recognition_tone:10, least:40, empowerment:20, escalation:10, script_quality:10, ops_followthrough:10 },
-      penalties: { illegal_phrase_repeat:15, refund_discount_promise:20, defensive_language:10, no_thank_close:5 },
-      pass_threshold: 70,
-      bands: { coach_me: [50,69], pass:[70,100], redo:[0,49] }
-    }
-  };
-
-  var DIALOGUE_KEY_DEFAULT = {
-    listen: [
-      "Give me a moment, I’ll check your order with the kitchen.",
-      "May I see the bill or table number to verify your order?",
-      "Let me pull up your order—could you share your table number?"
-    ],
-    empathize: [
-      "I understand the wait isn’t ideal.",
-      "I get how that’s frustrating.",
-      "I hear you—this isn’t the experience we want for you."
-    ],
-    apologize: [
-      "I’m really sorry about this.",
-      "My apologies—we should have done better.",
-      "I’m sorry you had to face this."
-    ],
-    solutionize: [
-      "I’ll replace this now and bring it fresh in 3 minutes.",
-      "I’ll remake it to your request and get it out right away.",
-      "Let me shift you to a clean table while we fix this."
-    ],
-    thank: [
-      "Thank you for your patience.",
-      "Thanks for flagging this.",
-      "We appreciate your understanding."
-    ]
-  };
-
-  var DIALOGUE_BY_SCENARIO = {
-    coffee_cold_01: {
-      listen:["Let me check when this was brewed. May I confirm your table number?"],
-      empathize:["I get how a cold coffee ruins the experience."],
-      apologize:["I’m really sorry—it shouldn’t have reached you cold."],
-      solutionize:["I’ll remake it hot now to ~65–70°C and serve in a fresh cup within 3 minutes."],
-      thank:["Thanks for flagging the temperature."]
-    },
-    wrong_drink_01: {
-      listen:["May I confirm your bill or table to verify what you ordered?"],
-      empathize:["I can see how getting the wrong drink is frustrating."],
-      apologize:["I’m sorry about the mix-up."],
-      solutionize:["I’ll replace it with the correct drink exactly as ordered and take this one back right away."],
-      thank:["Thanks for your patience while I correct this."]
-    },
-    drink_bitter_01: {
-      listen:["Could you tell me what tastes off—too dark roast, over-extracted?"],
-      empathize:["I understand that bitterness can be unpleasant."],
-      apologize:["Sorry about that."],
-      solutionize:["I’ll prepare a fresh cup with a shorter extraction or suggest a smoother profile and bring it in 3 minutes."],
-      thank:["Thank you for letting me adjust it."]
-    },
-    milk_temp_wrong_01: {
-      listen:["Let me reconfirm—would you like it extra-hot or closer to warm?"],
-      empathize:["I understand it’s important to get the milk just right."],
-      apologize:["Sorry the temperature wasn’t right."],
-      solutionize:["I’ll steam it to your preference and remake it now."],
-      thank:["Thanks for pointing it out."]
-    },
-    seating_dirty_01: {
-      listen:["Let me fix the table for you right away."],
-      empathize:["I get that a messy table isn’t acceptable."],
-      apologize:["Sorry about the cleanliness."],
-      solutionize:["I’ll sanitize this table now and set fresh cutlery, or move you to a clean table immediately."],
-      thank:["Thank you for flagging it."]
-    },
-    pastry_stale_01: {
-      listen:["May I check when this was warmed and from which batch?"],
-      empathize:["I understand that tastes stale isn’t okay."],
-      apologize:["Sorry about that."],
-      solutionize:["I’ll replace it with a fresh pastry and warm it properly."],
-      thank:["Thanks for letting me make it right."]
-    },
-    noise_loud_01: {
-      listen:["Let me check the music level and nearby tables."],
-      empathize:["I can see how the noise is uncomfortable."],
-      apologize:["Sorry about the noise."],
-      solutionize:["I’ll lower the music and can move you to a quieter spot if you prefer."],
-      thank:["Thanks for telling me."]
-    },
-    cup_chipped_01: {
-      listen:["Let me take a look at the cup."],
-      empathize:["I understand that’s not safe or pleasant."],
-      apologize:["Sorry about that."],
-      solutionize:["I’ll replace the cup and your drink immediately and remove this cup from service."],
-      thank:["Thanks for calling it out."]
-    },
-    coffee_strong_01: {
-      listen:["Would you like it milder or a different brew?"],
-      empathize:["I get that it feels too strong."],
-      apologize:["Sorry it didn’t match your taste."],
-      solutionize:["I can dilute slightly, remake with a lighter ratio, or offer a smoother option—your call."],
-      thank:["Thanks for the feedback."]
-    },
-    coffee_weak_01: {
-      listen:["Would you like it stronger or a different profile?"],
-      empathize:["I understand it tastes weak to you."],
-      apologize:["Sorry about that."],
-      solutionize:["I’ll remake it stronger or switch to a richer blend—ready in 3 minutes."],
-      thank:["Thanks for letting me fix it."]
-    },
-    hair_in_drink_01: {
-      listen:["Let me take this back and check immediately."],
-      empathize:["I understand this is concerning."],
-      apologize:["I’m really sorry—this shouldn’t happen."],
-      solutionize:["I’ll replace it in a sealed, clean cup and sanitize the station; I’m also calling my manager on duty now."],
-      thank:["Thank you for your patience while we address this."]
-    },
-    delay_dinein_01: {
-      listen:["Give me a moment, I’ll check your order with the kitchen. May I confirm your table number?"],
-      empathize:["I understand the wait isn’t ideal."],
-      apologize:["I’m sorry about the delay."],
-      solutionize:["I’ll expedite the cappuccino and sandwich to your table in 3 minutes."],
-      thank:["Thanks for your patience."]
-    }
-  };
-
-  var SC_LINES = {
-    delay_dinein_01: {
-      open: function(){ return DATA.scenarios.filter(function(s){return s.id==='delay_dinein_01';})[0].trigger; },
-      nudge_listen: ["Could you check our order?","Can you see what's causing the delay?","Can you look that up, please?","Do you need our table number?"],
-      after_listen: ["Thanks. Table 12.","Okay, table 12.","Table 12."],
-      nudge_empathize: ["I’ve been waiting a while.","This is taking longer than expected."],
-      after_empathize: ["Alright.","Okay."],
-      nudge_apologize: ["Is anyone acknowledging this?","Do you accept it's not ideal?"],
-      after_apologize: ["Okay. What can you do for me now?","Understood. How will you fix it?","Alright—so what's the plan?"],
-      nudge_solution: ["When will it reach my table?","What are you doing about it now?","What's the ETA?"],
-      after_solution: ["Okay. Please hurry.","Sounds good—how long?","Alright, I’ll wait."],
-      nudge_thank: ["Anything else I should know?","Okay, anything else?"],
-      close: ["Alright, thanks.","Thanks."]
-    },
-    coffee_cold_01: {
-      open: function(){ return DATA.scenarios.filter(function(s){return s.id==='coffee_cold_01';})[0].trigger; },
-      nudge_listen:["Can you check when this was brewed?","Could you confirm the temperature?"],
-      after_listen:["Yes, that’s my cup.","Right."],
-      nudge_empathize:["It’s not pleasant to drink it cold.","I expected it hot."],
-      after_empathize:["Exactly.","Yes."],
-      nudge_apologize:["Any apology here?"],
-      after_apologize:["Okay. What can you do for me now?"],
-      nudge_solution:["Will you remake it hot now?"],
-      after_solution:["Please hurry."],
-      nudge_thank:["Anything else?"],
-      close:["Thanks."]
-    },
-    wrong_drink_01: {
-      open: function(){ return DATA.scenarios.filter(function(s){return s.id==='wrong_drink_01';})[0].trigger; },
-      nudge_listen:["Do you want the bill or table number?"],
-      after_listen:["Bill ends with 274, Table 8."],
-      nudge_empathize:["This isn’t what I ordered."],
-      after_empathize:["Okay."],
-      nudge_apologize:["Are you sorry about this mix-up?"],
-      after_apologize:["Okay. What can you do now?"],
-      nudge_solution:["Can you replace it fresh—no sugar?"],
-      after_solution:["Yes—no sugar."],
-      nudge_thank:["Anything else?"],
-      close:["Thanks."]
-    },
-    drink_bitter_01: {
-      open: function(){ return DATA.scenarios.filter(function(s){return s.id==='drink_bitter_01';})[0].trigger; },
-      nudge_listen:["Can you check the extraction?"],
-      after_listen:["Right."],
-      nudge_empathize:["It’s unpleasantly bitter."],
-      after_empathize:["Exactly."],
-      nudge_apologize:["Any apology here?"],
-      after_apologize:["So what’s the fix?"],
-      nudge_solution:["Can you remake it smoother?"],
-      after_solution:["Okay."],
-      nudge_thank:["Anything else?"],
-      close:["Thanks."]
-    },
-    milk_temp_wrong_01: {
-      open: function(){ return DATA.scenarios.filter(function(s){return s.id==='milk_temp_wrong_01';})[0].trigger; },
-      nudge_listen:["Should I repeat my preference?"],
-      after_listen:["Extra-hot, that’s all."],
-      nudge_empathize:["I expected it as requested."],
-      after_empathize:["Thanks."],
-      nudge_apologize:["Do you accept the miss?"],
-      after_apologize:["Okay—what can you do for me now?"],
-      nudge_solution:["Will you remake it extra-hot?"],
-      after_solution:["Great."],
-      nudge_thank:["Anything else?"],
-      close:["Thank you."]
-    },
-    seating_dirty_01: {
-      open: function(){ return DATA.scenarios.filter(function(s){return s.id==='seating_dirty_01';})[0].trigger; },
-      nudge_listen:["Can you get someone to clean this?"],
-      after_listen:["Thanks."],
-      nudge_empathize:["Not great to sit at a messy table."],
-      after_empathize:["Exactly."],
-      nudge_apologize:["Any apology here?"],
-      after_apologize:["Okay—what will you do now?"],
-      nudge_solution:["Can you sanitize and reset the table?"],
-      after_solution:["Alright."],
-      nudge_thank:["Anything else?"],
-      close:["Thanks."]
-    },
-    pastry_stale_01: {
-      open: function(){ return DATA.scenarios.filter(function(s){return s.id==='pastry_stale_01';})[0].trigger; },
-      nudge_listen:["Could you check the batch?"],
-      after_listen:["Yes."],
-      nudge_empathize:["It tastes stale."],
-      after_empathize:["Exactly."],
-      nudge_apologize:["Any apology?"],
-      after_apologize:["What can you do now?"],
-      nudge_solution:["Replace with a fresh pastry?"],
-      after_solution:["Please warm it properly."],
-      nudge_thank:["Anything else?"],
-      close:["Thanks."]
-    },
-    noise_loud_01: {
-      open: function(){ return DATA.scenarios.filter(function(s){return s.id==='noise_loud_01';})[0].trigger; },
-      nudge_listen:["Can you check the music level?"],
-      after_listen:["Okay."],
-      nudge_empathize:["It’s too loud to talk."],
-      after_empathize:["Yes."],
-      nudge_apologize:["Any apology?"],
-      after_apologize:["So, what can you do?"],
-      nudge_solution:["Lower it or move us to a quieter area?"],
-      after_solution:["Thanks."],
-      nudge_thank:["Anything else?"],
-      close:["Thanks."]
-    },
-    cup_chipped_01: {
-      open: function(){ return DATA.scenarios.filter(function(s){return s.id==='cup_chipped_01';})[0].trigger; },
-      nudge_listen:["Please check the rim."],
-      after_listen:["Yes, there."],
-      nudge_empathize:["That doesn’t feel safe."],
-      after_empathize:["Exactly."],
-      nudge_apologize:["Any apology?"],
-      after_apologize:["What will you do now?"],
-      nudge_solution:["Replace the cup and drink?"],
-      after_solution:["Alright."],
-      nudge_thank:["Anything else?"],
-      close:["Thanks."]
-    },
-    coffee_strong_01: {
-      open: function(){ return DATA.scenarios.filter(function(s){return s.id==='coffee_strong_01';})[0].trigger; },
-      nudge_listen:["Can you adjust it?"],
-      after_listen:["I prefer milder."],
-      nudge_empathize:["It’s too strong for me."],
-      after_empathize:["Yes."],
-      nudge_apologize:["Any apology?"],
-      after_apologize:["So what can you do?"],
-      nudge_solution:["Can you remake it lighter?"],
-      after_solution:["Okay."],
-      nudge_thank:["Anything else?"],
-      close:["Thanks."]
-    },
-    coffee_weak_01: {
-      open: function(){ return DATA.scenarios.filter(function(s){return s.id==='coffee_weak_01';})[0].trigger; },
-      nudge_listen:["Can you adjust the strength?"],
-      after_listen:["Stronger, please."],
-      nudge_empathize:["It tastes weak."],
-      after_empathize:["Exactly."],
-      nudge_apologize:["Any apology?"],
-      after_apologize:["So what will you do?"],
-      nudge_solution:["Remake it stronger?"],
-      after_solution:["Okay."],
-      nudge_thank:["Anything else?"],
-      close:["Thanks."]
-    },
-    hair_in_drink_01: {
-      open: function(){ return DATA.scenarios.filter(function(s){return s.id==='hair_in_drink_01';})[0].trigger; },
-      nudge_listen:["Can you look at this?"],
-      after_listen:["Yes, that."],
-      nudge_empathize:["This makes me uneasy."],
-      after_empathize:["Hmm."],
-      nudge_apologize:["Any apology here?"],
-      after_apologize:["What now?"],
-      nudge_solution:["What’s your process?"],
-      after_solution:["Please call your manager."],
-      nudge_thank:["Anything else?"],
-      close:["Okay, I’ll wait."]
-    }
-  };
-
-  var KW = {
-    listen: [
-      "could you tell me","may i know","what happened","help me understand","can you share","let me check","may i confirm","could i see your bill","give me a moment","one moment","just a moment","hang on","i'll check","let me look up","let me pull up","receipt","bill number","table","allow me to check","let me confirm","allow me to verify"
-    ],
-    empathize: [
-      "i understand","i get it","i hear you","i see how","that wasn't ideal","not ideal","that must be frustrating","i know this is frustrating","i can imagine","you've had to wait","you have had to wait","i get how","i understand this is concerning","that’s frustrating"
-    ],
-    apologize: [
-      "i'm sorry","i am sorry","we're sorry","we are sorry","sorry","so sorry","sorry about that","really sorry","truly sorry","my apologies","apologies","my bad","apologise","apologize"
-    ],
-    solutionize: [
-      "let me replace","i'll replace","i will replace","we'll replace","we will replace","we can replace",
-      "i'll remake","i will remake","we'll remake","we will remake","we can remake",
-      "let me remake","allow me to replace","allow me to remake",
-      "i'll get it out","i will fix it","i'll fix it now","i can fix it","we'll fix it",
-      "right away","immediately","asap","priority","prioritize","prioritise","expedite","rush",
-      "i'll bring it fresh","bring you a fresh","prepare a fresh","i'll move you","let me shift you","i'll get this replaced","i'll get you another",
-      "i’ll steam it","i’ll sanitize","i’ll sanitise","i’ll lower the music","i’ll remake it hotter","i’ll remake it stronger","i’ll remake it milder",
-      "eta"
-    ],
-    thank: [
-      "thank you","thanks","appreciate your patience","we appreciate","thanks for waiting","thank you for your patience","thanks for flagging","appreciate it"
-    ],
-    escalation: ["manager","mod","supervisor","manager on duty","duty manager"],
-    forbidden_refund: ["refund","discount","compensate","100% off","credit note"]
-  };
-
-  var ACTION_VERBS = ["replace","remake","re-make","rebrew","re-brew","reheat","steam","sanitize","sanitise","clean","lower","move","shift","expedite","rush","prioritize","prioritise","bring","serve","fix","prepare","get"];
-
-  function hasDigit(t){ for (var i=0;i<t.length;i++){ var c=t.charCodeAt(i); if (c>=48 && c<=57) return true; } return false; }
-  function containsAny(t, arr){ for (var i=0;i<arr.length;i++){ if (t.indexOf(arr[i])>-1) return true; } return false; }
-  function detectSolution(t){
-    t = (t||"").toLowerCase();
-    if (hit(t, KW.solutionize)) return true;
-    if (t.indexOf("eta")>-1) return true;
-    var timeWords = [" min"," mins"," minute"," minutes"," sec"," secs"," second"," seconds"];
-    var timePre = [" in "," within "," by "," under "," inside "];
-    if (hasDigit(t) && containsAny(t, timeWords)) return true;
-    for (var i=0;i<timePre.length;i++){ if (t.indexOf(timePre[i])>-1 && containsAny(t, timeWords)) return true; }
-    var actors = ["i will","i can","i'll","we will","we can","we'll","let me","allow me"];
-    var verbs = ACTION_VERBS;
-    for (var a=0;a<actors.length;a++){ for (var v=0; v<verbs.length; v++){ if (t.indexOf(actors[a] + " " + verbs[v])>-1) return true; } }
-    return false;
-  }
-
-  function hit(t, arr){ return arr.some(function(k){ return t.indexOf(k) > -1; }); }
-  function analyze(t){ t = (t||"").toLowerCase(); return { listen:hit(t,KW.listen), empathize:hit(t,KW.empathize), apologize:hit(t,KW.apologize), solutionize:detectSolution(t), thank:hit(t,KW.thank), escalation:hit(t,KW.escalation), forbidden_refund:hit(t,KW.forbidden_refund) }; }
-  function hasTag(s, tag){ return s.tags && s.tags.indexOf(tag) > -1; }
-  function getLeast(s){ return (s.expected && s.expected.least) ? s.expected.least : ["listen","empathize","apologize","solutionize","thank"]; }
-  function needsEscalation(s){ return (s.expected && s.expected.empowerment === "escalate_mod") || hasTag(s, "safety"); }
-
-  function CoachPanel(props){
-    var map = {listen:{c:'var(--cL)'}, empathize:{c:'var(--cE)'}, apologize:{c:'var(--cA)'}, solutionize:{c:'var(--cS)'}, thank:{c:'var(--cT)'}};
-    var need = getLeast(props.scenario);
-    var next = need.find(function(k){ return !props.stats[k]; }) || (needsEscalation(props.scenario) && !props.stats.escalation ? 'escalation' : 'thank');
-    var keyset = DIALOGUE_BY_SCENARIO[props.scenario.id] || DIALOGUE_KEY_DEFAULT;
-    var hintList = keyset[next] || (DIALOGUE_KEY_DEFAULT[next]||[]);
-    var hint = hintList[0] || (next==='escalation'?'Please allow me to call my manager on duty.': 'Close with a brief thank-you.');
-    return React.createElement("div", { className:"panel" },
-      React.createElement("div", { className:"panel-header" },
-        React.createElement("div", null, "Coach"),
-        React.createElement("div", { className:"tag", style:{borderColor:'rgba(255,255,255,.2)'} }, "Scenario-aware guide")
-      ),
-      React.createElement("div", { className:"panel-body", style:{display:'grid', gap:10} },
-        React.createElement("div", { className:"card" },
-          React.createElement("div", { className:"coach-pill", style:{background:'rgba(255,255,255,.03)', border:'1px solid rgba(255,255,255,.12)', color:'#fff'} },
-            React.createElement("span", { style:{width:8,height:8,borderRadius:999,background: map[next] ? map[next].c : 'var(--info)'} }),
-            React.createElement("b", null, "Next action:"),
-            React.createElement("span", null, next.toUpperCase())
-          ),
-          React.createElement("div", { style:{marginTop:8, color:'#cbd5e1', fontSize:12} }, "Try:"),
-          React.createElement("div", { style:{marginTop:4, fontSize:12, color:'#e5e7eb'} }, hint)
-        ),
-        React.createElement("div", { className:"card" },
-          React.createElement("div", { style:{fontWeight:600, marginBottom:8} }, "Dialogue key"),
-          React.createElement("div", { className:"keygrid" },
-            ["listen","empathize","apologize","solutionize","thank"].map(function(step){ var lines = (keyset[step]||DIALOGUE_KEY_DEFAULT[step]||[]); return React.createElement("div", { key:step, className:"key", style:{borderColor: step==='listen'?'rgba(34,211,238,.3)': step==='empathize'?'rgba(244,114,182,.3)': step==='apologize'?'rgba(245,158,11,.35)': step==='solutionize'?'rgba(52,211,153,.35)':'rgba(167,139,250,.35)'} },
-              React.createElement("h4", { style:{color: step==='listen'?'var(--cL)': step==='empathize'?'var(--cE)': step==='apologize'?'var(--cA)': step==='solutionize'?'var(--cS)':'var(--cT)'} }, step.toUpperCase()),
-              React.createElement("ul", null, lines.map(function(line,i){ return React.createElement("li", { key:i }, line); }))
-            ); })
-          )
-        ),
-        needsEscalation(props.scenario) ? React.createElement("div", { className:"card" },
-          React.createElement("div", { style:{fontWeight:600, marginBottom:8, color:'var(--danger)'} }, "Safety/Escalation"),
-          React.createElement("div", { style:{fontSize:12, color:'#e5e7eb'} }, "If the issue hints at safety, say: 'I’m really sorry—allow me to call my manager on duty right away.'")
-        ) : null
-      )
-    );
-  }
-
-  function IntroSamples(){
-    var block = `
-  Scenario — Coffee too cold
-  Guest: This coffee is cold.
-  You: Let me check when this was brewed. May I confirm your table number?
-  Guest: Yes, that’s my cup.
-  You: I get how a cold coffee ruins the experience. I’m really sorry.
-  You: I’ll remake it hot now to ~65–70°C and serve in a fresh cup within 3 minutes.
-  You: Thanks for flagging the temperature.
-
-  Scenario — Wrong drink served
-  Guest: I asked for a Cold Brew, you served an Iced Latte.
-  You: May I confirm the bill number or table? I’ll check this now.
-  Guest: Bill ends with 274, Table 8.
-  You: I’m sorry about the mix-up.
-  You: I’ll replace it with the correct drink exactly as ordered and take this one back right away.
-  You: Thanks for your patience.
-  `;
-    return React.createElement("pre", { className:"sample" }, block);
-  }
-
-  function useAssessment(scenario, rubric, restartTick){
-    const [stats, setStats] = useState({listen:false, empathize:false, apologize:false, solutionize:false, thank:false, escalation:false, forbidden_refund:false});
-    const [messages, setMessages] = useState([{ role:"guest", text: (SC_LINES[scenario.id] && SC_LINES[scenario.id].open()) || scenario.trigger }]);
-    const startTime = useRef(Date.now());
-    const idxRef = useRef({});
-
-    useEffect(function(){ setStats({listen:false, empathize:false, apologize:false, solutionize:false, thank:false, escalation:false, forbidden_refund:false}); setMessages([{ role:"guest", text: (SC_LINES[scenario.id] && SC_LINES[scenario.id].open()) || scenario.trigger }]); idxRef.current={}; }, [scenario.id, restartTick]);
-
-    function choose(key, arr, fallback){ var a = (arr && arr.length? arr : (fallback||[])); if (!a.length) return null; var k = scenario.id+"::"+key; var i = (idxRef.current[k]||0)%a.length; idxRef.current[k]=i+1; return a[i]; }
-
-    function userSend(text){
-      const a = analyze(text);
-      const prev = Object.assign({}, stats);
-      const next = Object.assign({}, stats);
-      for (var k in a) { if (a.hasOwnProperty(k)) next[k] = next[k] || a[k]; }
-      setStats(next);
-      setMessages(function(m){ return m.concat([{ role:"you", text: text }]); });
-      var reply = decideGuestReply(scenario, prev, next);
-      if (reply) setMessages(function(m){ return m.concat([{ role:"guest", text: reply }]); });
-    }
-
-    function decideGuestReply(s, prev, st){
-      var sc = SC_LINES[s.id] || {};
-      var need = getLeast(s);
-      if (!prev.listen && st.listen) return choose('after_listen', sc.after_listen, ["Okay, got it."]); 
-      if (!prev.empathize && st.empathize) return choose('after_empathize', sc.after_empathize, ["Alright."]); 
-      if (!prev.apologize && st.apologize) return choose('after_apologize', sc.after_apologize, ["Okay. What can you do for me now?"]); 
-      if (!prev.solutionize && st.solutionize) return choose('after_solution', sc.after_solution, ["Okay, please hurry."]); 
-      if (!prev.thank && st.thank) return choose('close', sc.close, ["Thanks."]); 
-      if (needsEscalation(s) && !st.escalation) return "Can you call your manager, please?";
-      if (!st.listen && need.indexOf("listen")>-1) return choose('nudge_listen', sc.nudge_listen, ["Can you check on it, please?"]); 
-      if (!st.empathize && need.indexOf("empathize")>-1) return choose('nudge_empathize', sc.nudge_empathize, ["It feels like no one understands the issue."]); 
-      if (!st.apologize && need.indexOf("apologize")>-1) return choose('nudge_apologize', sc.nudge_apologize, ["Are you sorry about this?"]); 
-      if (!st.solutionize && need.indexOf("solutionize")>-1) return choose('nudge_solution', sc.nudge_solution, ["What will you do right now?"]); 
-      if (!st.thank && need.indexOf("thank")>-1) return choose('nudge_thank', sc.nudge_thank, ["Anything else?"]); 
-      return choose('close', sc.close, ["Thanks."]); 
-    }
-
-    function isResolved(s, st){
-      var need = getLeast(s);
-      var leastOk = need.every(function(k){ return st[k]; });
-      var escOk = (!needsEscalation(s)) || st.escalation;
-      var empowerOk = !st.forbidden_refund;
-      return leastOk && escOk && empowerOk;
-    }
-
-    function score(){
-      const w = rubric.weights, p = rubric.penalties;
-      var score = 0;
-      if (stats.listen || stats.empathize || stats.apologize) score += w.recognition_tone;
-      var need = getLeast(scenario);
-      var haveCount = need.filter(function(k){ return stats[k]; }).length;
-      score += (haveCount / (need.length||5)) * w.least;
-      if (!stats.forbidden_refund) score += w.empowerment;
-      score += (needsEscalation(scenario) ? (stats.escalation? w.escalation:0) : w.escalation);
-      if (stats.empathize && stats.apologize) score += w.script_quality;
-      if (stats.solutionize) score += w.ops_followthrough;
-      var penalties = 0;
-      if (stats.forbidden_refund) penalties += p.refund_discount_promise;
-      score = Math.max(0, Math.min(100, Math.round(score - penalties)));
-      var band = score >= rubric.pass_threshold ? "PASS" : (score >= rubric.bands.coach_me[0] ? "COACH-ME" : "REDO");
-      return { score: score, band: band, durationSec: Math.round((Date.now()-startTime.current)/1000) };
-    }
-
-    return { messages:messages, stats:stats, userSend:userSend, isResolved:function(){ return isResolved(scenario, stats); }, score:score };
-  }
-
-  function ScenarioList(props){
-    return React.createElement("div", { className:"scenario-list" },
-      DATA.scenarios.map(function(s){ return React.createElement("div", { key:s.id, className:"scenario-item" + (props.scenarioId===s.id?" active":""), onClick:function(){ props.onSelect(s.id); } },
-        React.createElement("div", { style:{fontWeight:600} }, s.title),
-        React.createElement("div", { className:"scenario-meta" }, React.createElement("span", { className:"badge" }, "L"+String(s.level)), React.createElement("span", null, s.tags.join(" • ")))
-      ); })
-    );
-  }
-
-  function DialogueKey(props){
-    var keyset = (props && props.scenario && DIALOGUE_BY_SCENARIO[props.scenario.id]) || DIALOGUE_KEY_DEFAULT;
-    return React.createElement("div", { className:"card" },
-      React.createElement("div", { style:{fontWeight:600, marginBottom:8} }, "Dialogue key (use these live)"),
-      React.createElement("div", { className:"keygrid" },
-        ["listen","empathize","apologize","solutionize","thank"].map(function(step){ var lines = (keyset[step]||DIALOGUE_KEY_DEFAULT[step]||[]); return React.createElement("div", { key:step, className:"key", style:{borderColor: step==='listen'?'rgba(34,211,238,.3)': step==='empathize'?'rgba(244,114,182,.3)': step==='apologize'?'rgba(245,158,11,.35)': step==='solutionize'?'rgba(52,211,153,.35)':'rgba(167,139,250,.35)'} },
-          React.createElement("h4", { style:{color: step==='listen'?'var(--cL)': step==='empathize'?'var(--cE)': step==='apologize'?'var(--cA)': step==='solutionize'?'var(--cS)':'var(--cT)'} }, step.toUpperCase()),
-          React.createElement("ul", null, lines.map(function(line,i){ return React.createElement("li", { key:i }, line); }))
-        ); })
-      )
-    );
-  }
-
-  function Composer(props){
-    const [v,setV] = useState("");
-    function send(){ if(!v.trim()) return; props.onSend(v.trim()); setV(""); }
-    return React.createElement("div", { className:"composer" },
-      React.createElement("input", { className:"input", placeholder:"Type your response… (guide in Coach)", value:v, onChange:function(e){setV(e.target.value);}, onKeyDown:function(e){ if(e.key==='Enter') send(); }, disabled:!!props.disabled }),
-      React.createElement("button", { className:"btn", onClick:send, disabled:!!props.disabled }, "Send")
-    );
-  }
-
-  function ReportCard(props){
-    function downloadJSON(){
-      var blob = new Blob([JSON.stringify(props.report,null,2)], {type:'application/json'});
-      var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-      var ts = new Date().toISOString().split(':').join('-');
-      a.download = 'cx_session_'+props.report.scenarioId+'_'+ts+'.json'; a.click(); URL.revokeObjectURL(a.href);
-    }
-    return React.createElement("div", { className:"panel report" },
-      React.createElement("div", { className:"panel-header" },
-        React.createElement("div", null, "Session Report"),
-        React.createElement("button", { className:"btn", onClick:downloadJSON }, "Download JSON")
-      ),
-      React.createElement("div", { className:"panel-body", style:{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12} },
-        React.createElement("div", null,
-          React.createElement("div", { className:"meta-line" }, React.createElement("b", null, "Scenario"), ": ", props.report.scenarioTitle),
-          React.createElement("div", { className:"meta-line" }, React.createElement("b", null, "Score"), ": ", props.report.score, " • ", React.createElement("b", null, "Band"), ": ", props.report.band),
-          React.createElement("div", { className:"meta-line" }, React.createElement("b", null, "Duration"), ": ", props.report.durationSec, "s"),
-          React.createElement("div", { className:"meta-line" }, React.createElement("b", null, "Timestamp"), ": ", props.report.timestamp),
-          React.createElement("div", { style:{marginTop:8} },
-            React.createElement("div", { style:{opacity:.8, fontWeight:600, marginBottom:6} }, "Breakdown"),
-            React.createElement("pre", { style:{background:'#0a0f16', border:'1px solid rgba(255,255,255,0.06)', borderRadius:10, padding:10, fontSize:12} }, JSON.stringify(props.report.breakdown,null,2))
-          )
-        ),
-        React.createElement("div", null,
-          React.createElement("div", { style:{opacity:.8, fontWeight:600, marginBottom:6} }, "Transcript (last 6)"),
-          React.createElement("div", { className:"chat", style:{height:220} },
-            props.report.messages.slice(-6).map(function(m,i){ return React.createElement("div", { key:i, className:'msg '+(m.role==='you'?'you':'guest') }, m.text); })
-          )
-        )
-      )
-    );
-  }
-
-  function Intro(props){
-    return React.createElement("div", { className:"panel" },
-      React.createElement("div", { className:"panel-header" },
-        React.createElement("div", null, "How this works"),
-        React.createElement("div", { style:{display:'flex',gap:8} },
-          React.createElement("button", { className:"btn", onClick: props.onStart }, "Start training")
-        )
-      ),
-      React.createElement("div", { className:"panel-body" },
-        React.createElement("div", { className:"intro" },
-          React.createElement("div", { className:"card" },
-            React.createElement("div", { style:{fontWeight:600, marginBottom:8} }, "Your goal"),
-            React.createElement("div", { className:"subtitle", style:{marginBottom:10} }, "Resolve the guest's issue in chat using LEAST and barista empowerment rules."),
-            React.createElement("div", { className:"li" }, React.createElement("div", { className:"dot-mini" }), React.createElement("div", null, React.createElement("b", null, "LEAST"), ": Listen · Empathize · Apologize · Solution · Thank.")),
-            React.createElement("div", { className:"li" }, React.createElement("div", { className:"dot-mini" }), React.createElement("div", null, React.createElement("b", null, "Empowerment"), ": Replace live orders. No refunds/discounts. Escalate safety.")),
-            React.createElement("div", { className:"li" }, React.createElement("div", { className:"dot-mini" }), React.createElement("div", null, React.createElement("b", null, "Success"), ": Auto-ends when you complete LEAST + the correct action without over-promising."))
-          ),
-          React.createElement(DialogueKey, { scenario: { id:'delay_dinein_01' } }),
-          React.createElement("div", { className:"card" },
-            React.createElement("div", { style:{fontWeight:600, marginBottom:8} }, "Sample dialogues"),
-            React.createElement(IntroSamples, null)
-          )
-        )
-      )
-    );
-  }
-
-  function MobileDropdowns(props){
-    return React.createElement("div", { className:"mobile-only", style:{display:'grid', gap:10} },
-      React.createElement("details", { className:"collapser" },
-        React.createElement("summary", null, "Scenario", React.createElement("span", { className:"badge", style:{marginLeft:8} }, "v"+DATA.meta.version)),
-        React.createElement("div", { className:"content" }, React.createElement(ScenarioList, { scenarioId:props.scenarioId, onSelect:props.onSelect }))
-      ),
-      React.createElement("details", { className:"collapser" },
-        React.createElement("summary", null, "Coach"),
-        React.createElement("div", { className:"content" }, React.createElement(CoachPanel, { scenario:props.scenario, stats:props.stats }))
-      )
-    );
-  }
-
-  function isDev(){ try { return typeof window !== 'undefined' && /[?&]dev=1/.test(window.location.search); } catch(e){ return false; } }
-
-  var DEV_TESTS = (function(){
-    var cases = [
-      { input:"Give me a moment, I’ll check with the kitchen.", expect:{ listen:true } },
-      { input:"I understand that’s frustrating.", expect:{ empathize:true } },
-      { input:"Sorry about that.", expect:{ apologize:true } },
-      { input:"I’ll remake it and bring it in 3 minutes.", expect:{ solutionize:true } },
-      { input:"We’ll expedite your cappuccino to your table.", expect:{ solutionize:true } },
-      { input:"Thanks for your patience.", expect:{ thank:true } },
-      { input:"Let me replace it right away.", expect:{ solutionize:true } },
-      { input:"May I confirm your table number?", expect:{ listen:true } }
     ];
-    var results = [];
-    var pass = 0;
-    for (var i=0;i<cases.length;i++){
-      var c = cases[i];
-      var a = analyze(c.input);
-      var ok = true;
-      for (var k in c.expect){ if (c.expect[k] && !a[k]) ok = false; }
-      if (ok) pass++;
-      results.push({ input:c.input, expected:c.expect, actual:a, ok:ok });
+
+    // Welcome Screen
+    function WelcomeScreen({ onNext }) {
+      const [page, setPage] = React.useState(1);
+
+      return (
+        <div className="min-h-screen gradient-purple flex items-center justify-center p-6">
+          <div className="max-w-md w-full">
+            {/* Logo */}
+            <div className="text-center mb-16 bounce-in">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 backdrop-blur-xl rounded-full shadow-2xl mb-8 float">
+                <span className="text-2xl font-bold text-white">☕</span>
+              </div>
+              <h1 className="text-6xl font-black text-white mb-4 tracking-tight" style={{textShadow: '0 4px 20px rgba(0,0,0,0.3)'}}>
+                The Cafe Way
+              </h1>
+              <div className="inline-block bg-white/20 backdrop-blur-md px-6 py-2 rounded-full">
+                <p className="text-white text-sm font-bold tracking-wide">🎯 LEAST Service Recovery Training</p>
+              </div>
+            </div>
+
+            {/* Page 1 - Introduction */}
+            {page === 1 && (
+              <>
+                <div className="glass-card rounded-3xl p-10 mb-6 slide-up">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      Welcome! 👋
+                    </h2>
+                    <div className="bg-gradient-to-br from-blue-400 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">12 Scenarios</div>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-3">🎯 Your Training Journey</h3>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        This interactive training will help you master the <span className="font-bold text-purple-600">LEAST framework</span> - our proven 5-step method for turning customer complaints into positive experiences.
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-3">✨ What You'll Do</h3>
+                      <ul className="space-y-2 text-sm text-gray-700">
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-500 font-bold">✓</span>
+                          <span>Practice real customer service scenarios</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-500 font-bold">✓</span>
+                          <span>Get instant feedback on your responses</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-500 font-bold">✓</span>
+                          <span>Unlock achievements and level up</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-500 font-bold">✓</span>
+                          <span>Build confidence in service recovery</span>
+                        </li>
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-2xl border border-purple-200">
+                      <p className="text-sm text-gray-800 font-semibold text-center">
+                        💪 Let's make every customer interaction count!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setPage(2)}
+                  className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 text-white font-black text-lg py-5 rounded-2xl hover:from-pink-600 hover:via-purple-600 hover:to-indigo-700 transition-all duration-300 shadow-2xl hover:shadow-pink-500/50 transform hover:scale-105 relative overflow-hidden group"
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-3">
+                    Next: Learn LEAST
+                    <span className="text-2xl">→</span>
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                </button>
+              </>
+            )}
+
+            {/* Page 2 - LEAST Framework */}
+            {page === 2 && (
+              <>
+                <div className="glass-card rounded-3xl p-10 mb-6 slide-up">
+                  <h2 className="text-2xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
+                    Master LEAST 🚀
+                  </h2>
+                  
+                  <p className="text-gray-600 text-sm mb-6 leading-relaxed font-medium">
+                    Five simple steps to transform complaints into positive experiences
+                  </p>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-5 p-5 rounded-2xl bg-gradient-to-r from-blue-50 to-transparent transition-all duration-300">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <span className="text-lg font-bold text-white">L</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900 text-base mb-0.5">Listen 👂</h3>
+                        <p className="text-xs text-gray-600 font-medium">Acknowledge and understand</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-5 p-5 rounded-2xl bg-gradient-to-r from-purple-50 to-transparent transition-all duration-300">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <span className="text-lg font-bold text-white">E</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900 text-base mb-0.5">Empathize 💙</h3>
+                        <p className="text-xs text-gray-600 font-medium">Show understanding</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-5 p-5 rounded-2xl bg-gradient-to-r from-pink-50 to-transparent transition-all duration-300">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <span className="text-lg font-bold text-white">A</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900 text-base mb-0.5">Apologize 🙏</h3>
+                        <p className="text-xs text-gray-600 font-medium">Take responsibility</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-5 p-5 rounded-2xl bg-gradient-to-r from-green-50 to-transparent transition-all duration-300">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <span className="text-lg font-bold text-white">S</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900 text-base mb-0.5">Solutionize ✨</h3>
+                        <p className="text-xs text-gray-600 font-medium">Offer clear solution</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-5 p-5 rounded-2xl bg-gradient-to-r from-orange-50 to-transparent transition-all duration-300">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <span className="text-lg font-bold text-white">T</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900 text-base mb-0.5">Thank 🌟</h3>
+                        <p className="text-xs text-gray-600 font-medium">Show appreciation</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mb-6">
+                  <button
+                    onClick={() => setPage(1)}
+                    className="flex-1 bg-white/10 backdrop-blur-md text-white font-bold text-base py-4 rounded-2xl hover:bg-white/20 transition-all duration-300 border border-white/20"
+                  >
+                    ← Back
+                  </button>
+                  <button
+                    onClick={onNext}
+                    className="flex-1 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 text-white font-black text-base py-4 rounded-2xl hover:from-pink-600 hover:via-purple-600 hover:to-indigo-700 transition-all duration-300 shadow-2xl hover:shadow-pink-500/50 transform hover:scale-105 relative overflow-hidden group"
+                  >
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      <span className="text-xl">🚀</span>
+                      Start
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      );
     }
-    return { cases:cases, results:results, pass:pass, total:cases.length };
-  })();
 
-  function DevPanel(){
-    return React.createElement("div", { className:"panel report" },
-      React.createElement("div", { className:"panel-header" },
-        React.createElement("div", null, "Self-tests"),
-        React.createElement("div", null, DEV_TESTS.pass+"/"+DEV_TESTS.total, DEV_TESTS.pass===DEV_TESTS.total?" ✅":" ⚠️")
-      ),
-      React.createElement("div", { className:"panel-body" },
-        React.createElement("div", { className:"chat", style:{height:220} },
-          DEV_TESTS.results.map(function(r,i){ return React.createElement("div", { key:i, className:'msg '+(r.ok?'you':'guest') }, (r.ok?"PASS ":"FAIL ")+"· "+r.input+" → "+JSON.stringify(r.actual)); })
-        )
-      )
-    );
-  }
+    // Scenario Selection
+    function ScenarioSelection({ onSelect, playerData, onBack }) {
+      return (
+        <div className="min-h-screen gradient-purple p-6">
+          <div className="max-w-2xl mx-auto">
+            {/* Back Button */}
+            <button
+              onClick={onBack}
+              className="fixed top-6 left-6 w-14 h-14 bg-white/10 backdrop-blur-md text-white rounded-full hover:bg-white/20 transition-all duration-300 shadow-lg z-50 flex items-center justify-center group"
+            >
+              <span className="text-2xl">←</span>
+            </button>
+            
+            {/* Header */}
+            <div className="text-center mb-12 slide-up">
+              <h1 className="text-3xl font-bold text-white mb-6 tracking-tight">Training Scenarios 🎮</h1>
+              <div className="flex items-center justify-center gap-8 text-white text-sm font-semibold">
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full">
+                  <span>Level</span>
+                  <span className="text-yellow-300">{playerData.level}</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full">
+                  <span>XP</span>
+                  <span className="text-green-300">{playerData.xp}</span>
+                </div>
+              </div>
+            </div>
 
-  function MainApp(){
-    const [started, setStarted] = useState(false);
-    const [scenarioId, setScenarioId] = useState(DATA.scenarios[0] ? DATA.scenarios[0].id : null);
-    const scenario = useMemo(function(){ return DATA.scenarios.filter(function(s){ return s.id===scenarioId; })[0]; }, [scenarioId]);
-    const [restartTick, setRestartTick] = useState(0);
-    const assess = useAssessment(scenario, DATA.rubric, restartTick);
-    const [report, setReport] = useState(null);
+            {/* Progress */}
+            <div className="glass-card rounded-2xl p-5 mb-6 slide-up" style={{animationDelay: '0.1s'}}>
+              <div className="flex justify-between text-xs font-medium text-gray-700 mb-3">
+                <span>Progress to Level {playerData.level + 1}</span>
+                <span className="text-purple-600 font-bold">{playerData.xp % 500}/500 XP</span>
+              </div>
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-500 rounded-full shadow-lg"
+                  style={{width: `${(playerData.xp % 500) / 5}%`}}
+                ></div>
+              </div>
+            </div>
 
-    function finish(){
-      var r0 = assess.score();
-      var rpt = { scenarioId: scenario.id, scenarioTitle: scenario.title, timestamp: new Date().toISOString(), score:r0.score, band:r0.band, durationSec:r0.durationSec, breakdown: assess.stats, messages: assess.messages };
-      setReport(rpt);
+            {/* Scenarios */}
+            <div className="space-y-4">
+              {SCENARIOS.map((scenario, index) => (
+                <div
+                  key={scenario.id}
+                  onClick={() => onSelect(scenario)}
+                  className="glass-card rounded-2xl p-6 cursor-pointer hover:shadow-xl transform transition-all duration-300 slide-up border-2 border-transparent hover:border-purple-300"
+                  style={{animationDelay: `${index * 0.05}s`}}
+                >
+                  <div className="flex items-center gap-5">
+                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 backdrop-blur-xl rounded-2xl flex items-center justify-center text-xl shadow-lg flex-shrink-0">
+                      {scenario.emoji}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-900 text-sm mb-1">{scenario.title}</h3>
+                      <p className="text-xs text-gray-500 font-medium">{scenario.description}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="text-purple-600 font-bold text-sm">+{scenario.xp}</div>
+                      <div className="text-xs text-gray-400">XP</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
     }
-    function restart(){ setReport(null); setRestartTick(function(x){ return x+1; }); }
 
-    useEffect(function(){ if (started && assess.isResolved() && !report) { var t = setTimeout(function(){ finish(); }, 250); return function(){ clearTimeout(t); }; } }, [assess.messages, report, started]);
+    // Game Screen
+    function GameScreen({ scenario, onComplete, onBack }) {
+      const [messages, setMessages] = useState([
+        { sender: 'customer', text: scenario.customerMessage, time: new Date() }
+      ]);
+      const [userInput, setUserInput] = useState('');
+      const [currentStep, setCurrentStep] = useState('listen'); // listen, empathize, apologize, solutionize, thank, complete
+      const [stepAttempts, setStepAttempts] = useState({
+        listen: 0, empathize: 0, apologize: 0, solutionize: 0, thank: 0
+      });
+      const [leastCompleted, setLeastCompleted] = useState({
+        listen: false, empathize: false, apologize: false, solutionize: false, thank: false
+      });
+      const [showCoach, setShowCoach] = useState(false);
+      const [failedAttempts, setFailedAttempts] = useState(0);
+      const [showExamples, setShowExamples] = useState(false);
 
-    var chipStyle = function(k,on){ var c = k==='L'?'var(--cL)':k==='E'?'var(--cE)':k==='A'?'var(--cA)':k==='S'?'var(--cS)':'var(--cT)'; return { borderColor:on?c:'rgba(255,255,255,.06)', color:on?'#0a0c10':'var(--ink-dim)', background:on?c:'rgba(255,255,255,.02)' }; };
+      const getExampleDialogue = (step) => {
+        const examples = {
+          listen: [
+            "Let me check your order with the kitchen.",
+            "May I confirm your table number?",
+            "Give me a moment, I'll verify what happened."
+          ],
+          empathize: [
+            "I understand the wait isn't ideal.",
+            "I can see how frustrating this is.",
+            "I hear you—this isn't the experience we want for you."
+          ],
+          apologize: [
+            "I'm really sorry about this.",
+            "My apologies—we should have done better.",
+            "I'm sorry you had to face this."
+          ],
+          solutionize: [
+            "I'll get your order to you in 3 minutes.",
+            "Let me remake this and bring it fresh right away.",
+            "I'll fix this now and serve it hot in 2 minutes."
+          ],
+          thank: [
+            "Thank you for your patience.",
+            "Thanks for bringing this to my attention.",
+            "I appreciate your understanding."
+          ]
+        };
+        
+        return examples[step] || [];
+      };
 
-    return React.createElement("div", { className:"app" },
-      React.createElement(Theme, null),
-      React.createElement("div", { className:"shell" },
-        React.createElement("div", { className:"topbar" },
-          React.createElement("div", { className:"brand" }, React.createElement("div", { className:"dot" }), React.createElement("div", null,
-            React.createElement("div", { className:"title" }, "Third Wave Coffee • CX Coach"),
-            React.createElement("div", { className:"subtitle" }, started ? "Minimal. Precise. Floor-ready." : "Read the brief, skim samples, then start.")
-          )),
-          started ? React.createElement("div", { className:"progress" }, ["L","E","A","S","T"].map(function(k){
-            var map = {L:"listen",E:"empathize",A:"apologize",S:"solutionize",T:"thank"};
-            var on = assess.stats[map[k]];
-            return React.createElement("div", { key:k, className:"chip", style: chipStyle(k,on) }, React.createElement("span", { className:"dot-sm" }), k);
-          })) : null
-        ),
+      const detectLEASTElement = (text, element) => {
+        const lower = text.toLowerCase();
+        
+        switch(element) {
+          case 'listen':
+            return /\b(check|confirm|verify|table|order|look|moment|see|bill|number|pull up|let me)\b/.test(lower);
+          case 'empathize':
+            return /\b(understand|get it|get how|see how|frustrating|difficult|inconvenience|not ideal|hear you|feel)\b/.test(lower);
+          case 'apologize':
+            return /\b(sorry|apologize|apologies|my apologies|shouldn't have|should have done better|regret)\b/.test(lower);
+          case 'solutionize':
+            return /\b(fix|replace|remake|bring|fresh|minute|minutes|min|mins|right away|immediately|now|will|let me|i'll|ill|get|serve|serving|deliver|here is|on its way|coming|ready)\b/.test(lower);
+          case 'thank':
+            return /\b(thank|thanks|appreciate|patience|flagging|understanding|grateful)\b/.test(lower);
+          default:
+            return false;
+        }
+      };
 
-        !started ? React.createElement(Intro, { onStart:function(){ setReport(null); setStarted(true); } }) : (
-          React.createElement("div", { className:"wrap" },
-            React.createElement("aside", { className:"panel desktop-only" },
-              React.createElement("div", { className:"panel-header" }, React.createElement("div", null, "Scenarios"), React.createElement("div", { className:"subtitle" }, "v"+DATA.meta.version)),
-              React.createElement("div", { className:"panel-body", style:{paddingTop:6} },
-                React.createElement(ScenarioList, { scenarioId:scenarioId, onSelect:function(id){ setReport(null); setScenarioId(id); } })
-              )
-            ),
-            React.createElement("section", { className:"panel", style:{display:"flex", flexDirection:"column"} },
-              React.createElement("div", { className:"panel-header", style:{gap:10} },
-                React.createElement("div", null, React.createElement("div", { style:{fontWeight:600} }, scenario.title), React.createElement("div", { className:"subtitle" }, "Chat until it’s actually resolved.")),
-                React.createElement("div", { style:{display:'flex', gap:8} },
-                  React.createElement("button", { className:"btn secondary", onClick: restart }, "Start again")
-                )
-              ),
-              React.createElement("div", { className:"panel-body", style:{display:"flex", flexDirection:"column", gap:10} },
-                React.createElement(MobileDropdowns, { scenarioId:scenarioId, onSelect:function(id){ setReport(null); setScenarioId(id); }, scenario:scenario, stats:assess.stats }),
-                React.createElement("div", { className:"chat" }, assess.messages.map(function(m,i){ return React.createElement("div", { key:i, className:'msg '+(m.role==='you'?'you':m.role==='guest'?'guest':'sys') }, m.text); })),
-                React.createElement(Composer, { onSend:function(t){ assess.userSend(t); }, disabled:!!report }),
-                React.createElement("div", { style:{display:"flex", gap:8, justifyContent:"flex-end"} }, React.createElement("button", { className:"btn warn", onClick:finish, disabled:!!report }, "End & Score")),
-                report ? React.createElement(ReportCard, { report:report }) : null
-              )
-            ),
-            React.createElement("div", { className:"desktop-only" }, React.createElement(CoachPanel, { scenario:scenario, stats:assess.stats })),
-            isDev() ? React.createElement(DevPanel, null) : null
-          )
-        )
-      )
-    );
-  }
+      const getCustomerResponse = (step, hasElement, userMessage) => {
+        const lower = userMessage.toLowerCase();
+        
+        // Context-aware responses based on what user asked
+        if (step === 'listen') {
+          if (hasElement) {
+            // User is checking/confirming - provide info
+            if (/table|number|bill/.test(lower)) {
+              return "Table 12.";
+            }
+            return "Thanks for checking.";
+          } else {
+            return ["Could you check our order?", "Can you see what's the issue?", "Do you need our table number?"][Math.floor(Math.random() * 3)];
+          }
+        }
+        
+        if (step === 'empathize') {
+          if (hasElement) {
+            return ["Exactly.", "Yes, thank you.", "I appreciate that."][Math.floor(Math.random() * 3)];
+          } else {
+            return ["I've been waiting a while.", "This isn't ideal.", "It's frustrating."][Math.floor(Math.random() * 3)];
+          }
+        }
+        
+        if (step === 'apologize') {
+          if (hasElement) {
+            return ["Okay. What can you do now?", "Understood. How will you fix it?", "Alright—what's the plan?"][Math.floor(Math.random() * 3)];
+          } else {
+            return ["Is anyone taking responsibility?", "Any apology here?", "Do you accept this isn't right?"][Math.floor(Math.random() * 3)];
+          }
+        }
+        
+        if (step === 'solutionize') {
+          if (hasElement) {
+            // Check if they mentioned time/urgency
+            if (/minute|now|right away|immediately/.test(lower)) {
+              return ["Sounds good, please hurry.", "Okay, how long exactly?", "Alright, I'll wait."][Math.floor(Math.random() * 3)];
+            }
+            return ["Thank you.", "Okay, that works.", "Sounds good."][Math.floor(Math.random() * 3)];
+          } else {
+            return ["What are you going to do about it?", "What's the solution?", "How will you fix this?"][Math.floor(Math.random() * 3)];
+          }
+        }
+        
+        if (step === 'thank') {
+          if (hasElement) {
+            return ["You're welcome.", "Thanks for your help.", "I appreciate it."][Math.floor(Math.random() * 3)];
+          } else {
+            return ["Anything else?", "Is that all?"][Math.floor(Math.random() * 2)];
+          }
+        }
 
-  function App(){
-    return React.createElement(ErrorBoundary, null, React.createElement(MainApp, null));
-  }
+        return "Okay.";
+      };
 
-  const root = ReactDOM.createRoot(document.getElementById('root'));
-  root.render(React.createElement(App));
+      const getNextStep = (current) => {
+        const steps = ['listen', 'empathize', 'apologize', 'solutionize', 'thank'];
+        const currentIndex = steps.indexOf(current);
+        if (currentIndex < steps.length - 1) {
+          return steps[currentIndex + 1];
+        }
+        return 'complete';
+      };
+
+      const handleSendMessage = () => {
+        if (!userInput.trim() || currentStep === 'complete') return;
+        
+        // Add user message
+        const newMessages = [
+          ...messages,
+          { sender: 'user', text: userInput, time: new Date() }
+        ];
+        setMessages(newMessages);
+        
+        // Check if current LEAST element is present
+        const hasElement = detectLEASTElement(userInput, currentStep);
+        
+        // Update attempts
+        setStepAttempts(prev => ({
+          ...prev,
+          [currentStep]: prev[currentStep] + 1
+        }));
+        
+        // Add customer response after delay
+        setTimeout(() => {
+          const customerResponse = getCustomerResponse(currentStep, hasElement, userInput);
+          
+          setMessages(prev => [
+            ...prev,
+            { sender: 'customer', text: customerResponse, time: new Date() }
+          ]);
+          
+          // If element detected, mark complete and move to next step
+          if (hasElement) {
+            setLeastCompleted(prev => ({
+              ...prev,
+              [currentStep]: true
+            }));
+            
+            setFailedAttempts(0); // Reset failed attempts on success
+            
+            const nextStep = getNextStep(currentStep);
+            setCurrentStep(nextStep);
+            
+            // If conversation complete, show feedback
+            if (nextStep === 'complete') {
+              setTimeout(() => {
+                setMessages(prev => [
+                  ...prev,
+                  { sender: 'customer', text: "Thank you for your help!", time: new Date() }
+                ]);
+              }, 1000);
+            }
+          } else {
+            // Increment failed attempts
+            setFailedAttempts(prev => {
+              const newCount = prev + 1;
+              if (newCount === 3) {
+                setShowCoach(true);
+                setShowExamples(false); // First popup: just hints
+              } else if (newCount >= 5) {
+                setShowCoach(true);
+                setShowExamples(true); // Second popup: show examples
+              }
+              return newCount;
+            });
+          }
+        }, 800);
+        
+        setUserInput('');
+      };
+
+      const calculateScore = () => {
+        const completed = Object.values(leastCompleted).filter(v => v).length;
+        const totalAttempts = Object.values(stepAttempts).reduce((a, b) => a + b, 0);
+        
+        // Base score on LEAST completion
+        let score = completed * 20; // 20 points per element
+        
+        // Bonus for efficiency (completing in fewer attempts)
+        if (totalAttempts <= 5) score += 20;
+        else if (totalAttempts <= 7) score += 10;
+        
+        return Math.min(100, score);
+      };
+      
+      const handleComplete = () => {
+        const finalScore = calculateScore();
+        onComplete(finalScore, scenario.xp);
+      };
+      
+      useEffect(() => {
+        // Scroll to bottom when messages update
+        const chatContainer = document.getElementById('chat-messages');
+        if (chatContainer) {
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+      }, [messages]);
+
+      return (
+        <div className="min-h-screen gradient-purple flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-4 flex-shrink-0 shadow-lg relative">
+            <button
+              onClick={onBack}
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white/30 transition-all duration-300 shadow-lg flex items-center justify-center"
+            >
+              <span className="text-xl">←</span>
+            </button>
+            <div className="max-w-2xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-lg shadow-lg">
+                  {scenario.emoji}
+                </div>
+                <div>
+                  <h2 className="text-white font-bold text-sm">{scenario.title}</h2>
+                  <p className="text-white/80 text-xs font-medium">{scenario.difficulty}</p>
+                </div>
+              </div>
+              <div className="text-yellow-300 font-bold text-sm">+{scenario.xp} XP</div>
+            </div>
+          </div>
+
+          {/* Chat Messages */}
+          <div id="chat-messages" className="flex-1 overflow-y-auto px-4 py-6">
+            <div className="max-w-2xl mx-auto space-y-4">
+              {/* LEAST Progress Tracker */}
+              <div className="glass-card rounded-2xl p-5 mb-4">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-gray-900 font-bold text-sm">LEAST Progress 🎯</span>
+                  <span className="text-purple-600 text-sm font-bold">{Object.values(leastCompleted).filter(v => v).length}/5</span>
+                </div>
+                <div className="flex gap-2">
+                  {['listen', 'empathize', 'apologize', 'solutionize', 'thank'].map((step, idx) => (
+                    <div
+                      key={step}
+                      className={`flex-1 h-2 rounded-full transition-all duration-500 ${
+                        leastCompleted[step]
+                          ? idx === 0 ? 'bg-gradient-to-r from-blue-400 to-blue-600 shadow-md' :
+                            idx === 1 ? 'bg-gradient-to-r from-purple-400 to-purple-600 shadow-md' :
+                            idx === 2 ? 'bg-gradient-to-r from-pink-400 to-pink-600 shadow-md' :
+                            idx === 3 ? 'bg-gradient-to-r from-green-400 to-green-600 shadow-md' :
+                            'bg-gradient-to-r from-orange-400 to-orange-600 shadow-md'
+                          : currentStep === step
+                          ? 'bg-gray-300'
+                          : 'bg-gray-200'
+                      }`}
+                      title={step.charAt(0).toUpperCase() + step.slice(1)}
+                    ></div>
+                  ))}
+                </div>
+                <div className="flex justify-between mt-4 text-xs text-gray-600 font-semibold">
+                  <span>L</span>
+                  <span>E</span>
+                  <span>A</span>
+                  <span>S</span>
+                  <span>T</span>
+                </div>
+              </div>
+
+              {messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} fade-in`}
+                >
+                  <div
+                    className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                      msg.sender === 'user'
+                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                        : 'bg-white text-gray-900 shadow-md border-2 border-gray-100'
+                    }`}
+                  >
+                    <p className="text-sm leading-relaxed font-medium">{msg.text}</p>
+                    <p className={`text-xs mt-2 font-medium ${
+                      msg.sender === 'user' ? 'text-white/70' : 'text-gray-400'
+                    }`}>
+                      {msg.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Feedback Section */}
+              {currentStep === 'complete' && (
+                <div className="bounce-in mt-6">
+                  <div className="glass-card rounded-2xl p-6 border border-gray-100">
+                    <div className="text-center mb-4">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Training Complete</h3>
+                      <div className="text-5xl font-bold text-indigo-600 mb-2">
+                        {Object.values(leastCompleted).filter(v => v).length}/5
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {calculateScore() >= 80 ? 'Excellent service recovery' : 
+                         calculateScore() >= 60 ? 'Good service' : 
+                         calculateScore() >= 40 ? 'Basic service' : 
+                         'Practice needed'}
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-5 gap-2 mb-6">
+                      <div className={`rounded-lg p-3 text-center border ${
+                        leastCompleted.listen ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-200'
+                      }`}>
+                        <div className="text-xs text-gray-600 mb-1 font-medium">L</div>
+                        <div className="text-lg">{leastCompleted.listen ? '✓' : '—'}</div>
+                      </div>
+                      <div className={`rounded-lg p-3 text-center border ${
+                        leastCompleted.empathize ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-200'
+                      }`}>
+                        <div className="text-xs text-gray-600 mb-1 font-medium">E</div>
+                        <div className="text-lg">{leastCompleted.empathize ? '✓' : '—'}</div>
+                      </div>
+                      <div className={`rounded-lg p-3 text-center border ${
+                        leastCompleted.apologize ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-200'
+                      }`}>
+                        <div className="text-xs text-gray-600 mb-1 font-medium">A</div>
+                        <div className="text-lg">{leastCompleted.apologize ? '✓' : '—'}</div>
+                      </div>
+                      <div className={`rounded-lg p-3 text-center border ${
+                        leastCompleted.solutionize ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-200'
+                      }`}>
+                        <div className="text-xs text-gray-600 mb-1 font-medium">S</div>
+                        <div className="text-lg">{leastCompleted.solutionize ? '✓' : '—'}</div>
+                      </div>
+                      <div className={`rounded-lg p-3 text-center border ${
+                        leastCompleted.thank ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-200'
+                      }`}>
+                        <div className="text-xs text-gray-600 mb-1 font-medium">T</div>
+                        <div className="text-lg">{leastCompleted.thank ? '✓' : '—'}</div>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={handleComplete}
+                      className="w-full bg-indigo-600 text-white font-semibold text-base py-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+                    >
+                      Continue Training
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Coach Modal */}
+              {showCoach && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 fade-in" onClick={() => setShowCoach(false)}>
+                  <div className="bounce-in" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-white rounded-3xl p-8 max-w-md mx-4 shadow-2xl">
+                      <div className="text-center">
+                        <div className="text-6xl mb-4">🎓</div>
+                        <h3 className="text-2xl font-black text-gray-800 mb-3">
+                          {showExamples ? 'Here are some examples' : 'Need help?'}
+                        </h3>
+                        
+                        {!showExamples ? (
+                          <p className="text-gray-600 mb-6">
+                            Having trouble with the <span className="font-bold text-purple-600">{currentStep}</span> step? 
+                            Try using keywords that show you're <span className="font-semibold">
+                              {currentStep === 'listen' ? 'acknowledging the issue' :
+                               currentStep === 'empathize' ? 'understanding their feelings' :
+                               currentStep === 'apologize' ? 'taking responsibility' :
+                               currentStep === 'solutionize' ? 'offering a solution with timeline' :
+                               'showing appreciation'}
+                            </span>.
+                          </p>
+                        ) : (
+                          <div className="text-left mb-6">
+                            <p className="text-gray-500 text-sm mb-4 text-center">
+                              Here are some examples:
+                            </p>
+                            <div className="space-y-2">
+                              {getExampleDialogue(currentStep).map((example, idx) => (
+                                <div key={idx} className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+                                  <p className="text-sm text-gray-700">"{example}"</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        <button
+                          onClick={() => {
+                            setShowCoach(false);
+                            if (showExamples) {
+                              setFailedAttempts(0); // Only reset if showing examples
+                              setShowExamples(false);
+                            }
+                            // Don't reset attempts on first popup - let them try again
+                          }}
+                          className="w-full bg-indigo-600 text-white font-semibold text-base py-3 rounded-xl hover:bg-indigo-700 transition-colors"
+                        >
+                          Got it
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Input Area */}
+          {currentStep !== 'complete' && (
+            <div className="bg-white/5 backdrop-blur-xl border-t border-white/10 px-4 py-4 flex-shrink-0">
+              <div className="max-w-2xl mx-auto">
+                <div className="mb-2">
+                  <span className="text-xs text-white/60">
+                    Next: <span className="font-semibold text-white">
+                      {currentStep === 'listen' ? 'Listen' :
+                       currentStep === 'empathize' ? 'Empathize' :
+                       currentStep === 'apologize' ? 'Apologize' :
+                       currentStep === 'solutionize' ? 'Solutionize' :
+                       'Thank'}
+                    </span>
+                  </span>
+                </div>
+                <div className="flex gap-3 items-end">
+                  <textarea
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                    placeholder="Type your response..."
+                    rows="2"
+                    className="flex-1 px-4 py-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-white/40 focus:border-white/40 focus:ring-2 focus:ring-white/20 outline-none resize-none text-sm"
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!userInput.trim()}
+                    className={`px-5 py-3 rounded-xl font-semibold text-sm transition-colors ${
+                      userInput.trim()
+                        ? 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30 border border-white/30'
+                        : 'bg-white/5 text-white/30 cursor-not-allowed border border-white/10'
+                    }`}
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Results Screen
+    function ResultsScreen({ score, xpEarned, onContinue }) {
+      const getGrade = () => {
+        if (score >= 75) return { text: 'Outstanding', color: 'text-indigo-600' };
+        if (score >= 50) return { text: 'Great Job', color: 'text-indigo-500' };
+        return { text: 'Keep Practicing', color: 'text-gray-600' };
+      };
+
+      const grade = getGrade();
+
+      return (
+        <div className="min-h-screen gradient-purple flex items-center justify-center p-6 overflow-y-auto">
+          <div className="max-w-md w-full bounce-in">
+            <div className="glass-card rounded-2xl p-8 text-center border border-gray-100">
+              <h2 className={`text-3xl font-semibold ${grade.color} mb-4`}>{grade.text}</h2>
+              <div className="text-6xl font-bold text-gray-900 mb-6">{score}%</div>
+              
+              <div className="bg-indigo-50 border border-indigo-100 text-indigo-700 font-semibold text-base py-3 px-6 rounded-xl inline-block mb-8">
+                +{xpEarned} XP Earned
+              </div>
+
+              <button
+                onClick={onContinue}
+                className="w-full bg-indigo-600 text-white font-semibold text-base py-4 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+              >
+                Continue Training
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Main App
+    function App() {
+      const [screen, setScreen] = useState('welcome');
+      const [currentScenario, setCurrentScenario] = useState(null);
+      const [playerData, setPlayerData] = useState({ level: 1, xp: 0 });
+      const [lastScore, setLastScore] = useState(0);
+      const [lastXP, setLastXP] = useState(0);
+
+      const handleStart = () => setScreen('scenarios');
+      
+      const handleSelectScenario = (scenario) => {
+        setCurrentScenario(scenario);
+        setScreen('game');
+      };
+
+      const handleComplete = (score, scenarioXP) => {
+        const xpEarned = Math.floor((scenarioXP * score) / 100);
+        setLastScore(score);
+        setLastXP(xpEarned);
+        setPlayerData(prev => {
+          const newXP = prev.xp + xpEarned;
+          const newLevel = Math.floor(newXP / 500) + 1;
+          return { level: newLevel, xp: newXP };
+        });
+        setScreen('results');
+      };
+
+      const handleContinue = () => setScreen('scenarios');
+
+      return (
+        <>
+          {screen === 'welcome' && <WelcomeScreen onNext={handleStart} />}
+          {screen === 'scenarios' && (
+            <ScenarioSelection 
+              onSelect={handleSelectScenario} 
+              playerData={playerData}
+              onBack={() => setScreen('welcome')}
+            />
+          )}
+          {screen === 'game' && currentScenario && (
+            <GameScreen 
+              scenario={currentScenario} 
+              onComplete={handleComplete}
+              onBack={() => setScreen('scenarios')}
+            />
+          )}
+          {screen === 'results' && (
+            <ResultsScreen 
+              score={lastScore} 
+              xpEarned={lastXP} 
+              onContinue={handleContinue}
+            />
+          )}
+        </>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
   </script>
+  
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </body>
 </html>
